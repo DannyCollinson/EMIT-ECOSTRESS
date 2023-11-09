@@ -15,15 +15,18 @@ def train(
     val_loader: Union[DataLoader, None] = None,
     n_epochs: int = 10,
     loss_interval: Union[int, None] = 5,
+    preexisting_losses: Union[list[np.ndarray, np.ndarray], None] = None,
     device: str = 'cpu',
 ) -> tuple[np.ndarray[np.float64, Any], np.ndarray[np.float64, Any]]:
     begin: float = time.time()
     t: float = begin
     current_epoch: int = 0
+    if preexisting_losses is not None:
+        current_epoch = len(preexisting_losses[0]) - 1
     train_loss: np.ndarray[np.float64, Any] = np.zeros(shape=n_epochs+1)
     val_loss: np.ndarray[np.float64, Any] = np.zeros(shape=n_epochs+1)
     try:
-        for epoch in range(n_epochs+1):
+        for epoch in range(current_epoch, current_epoch + n_epochs + 1):
             current_epoch = epoch
             model.train()
             for x, y in train_loader:
@@ -37,7 +40,7 @@ def train(
                     optimizer.step()
                 train_loss[epoch] += (
                     loss.item() /
-                    len(train_loader.dataset) # type: ignore
+                    len(train_loader)
                 )
 
             if val_loader is not None:
@@ -49,7 +52,7 @@ def train(
                         x = model(x)
                         val_loss[epoch] += (
                             loss_fn(x, y.squeeze()).item() /
-                            len(val_loader.dataset) # type: ignore
+                            len(val_loader)
                         )
 
             if epoch != 0 and scheduler is not None:
@@ -59,8 +62,10 @@ def train(
                 loss_interval is not None
                 and (epoch % loss_interval == 0 or epoch == n_epochs - 1)
             ):
+                if preexisting_losses is not None:
+                    results_epoch = len(preexisting_losses[0]) - 1 + epoch
                 print(
-                    f'Epoch {"0" * (3 - len(str(object=epoch))) + str(object=epoch)}\t\t'
+                    f'Epoch {"0" * (3 - len(str(epoch))) + str(epoch)}\t\t'
                     f'Train Loss: {train_loss[epoch]:.5}\t\t'
                     f'Val Loss: {val_loss[epoch]:.5} \t\t',
                     end='',
@@ -77,5 +82,9 @@ def train(
         print('\nTraining interrupted by user')
         train_loss = train_loss[:current_epoch]
         val_loss = val_loss[:current_epoch]
+    
+    if preexisting_losses is not None:
+        train_loss = np.concatenate([preexisting_losses[0], train_loss])
+        val_loss = np.concatenate([preexisting_losses[1], val_loss])
 
     return train_loss, val_loss

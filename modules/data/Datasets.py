@@ -1,10 +1,14 @@
+'''
+Dataset classes for use in model training
+'''
+
 from typing import Union
 import pickle
 
 import numpy as np
 
 from torch import Tensor, tensor
-from torch import concatenate
+from torch import concatenate, unsqueeze
 from torch.utils.data import Dataset
 
 
@@ -28,12 +32,12 @@ class EmitEcostressDataset(Dataset):
 
         Input:
         emit_data_path: path to emit data as .npy or .pkl file,
-                        not used if emit_data != None
+                        not used if emit_data is not None
         emit_data: 2- or 3- dimensional np array of emit data
         omit_components: int telling how many components of the emit
                          spectra being loaded/provided to omit rom the end
         ecostress_data_path: path to ecostress data as .npy or .pkl file,
-                             not used if ecostress_data != None
+                             not used if ecostress_data is not None
         ecostress_data: 1- or 2- dimensional np array of ecostress data
         ecostress_center: float to center ecostress_data with
         ecostress_scale: float to scale centered ecostress_data by
@@ -49,7 +53,7 @@ class EmitEcostressDataset(Dataset):
           and if additional_data_paths specifies a path to data already
           in additional_data, a duplicate will be added
         '''
-        if emit_data_path != None and emit_data == None:
+        if emit_data_path is not None and emit_data == None:
             if emit_data_path[-4:] == '.npy':
                 emit_data = np.load(file=emit_data_path)
             elif emit_data_path[-4:] == '.pkl':
@@ -84,7 +88,7 @@ class EmitEcostressDataset(Dataset):
                 'Either emit_data_path or emit_data must not be None'
             )
 
-        if ecostress_data_path != None and ecostress_data == None:
+        if ecostress_data_path is not None and ecostress_data == None:
             if ecostress_data_path[-4:] == '.npy':
                 ecostress_data = np.load(file=ecostress_data_path)
             elif ecostress_data_path[-4:] == '.pkl':
@@ -162,11 +166,11 @@ class EmitEcostressDataset(Dataset):
         #     f'got {self.emit_data.shape[0]} and {self.ecostress_data.shape[0]}'
 
         self.additional_data = []
-        if additional_data != None:
+        if additional_data is not None:
             for i in range(len(additional_data)):
                 if len(additional_data[i].shape) == 1:
                     self.additional_data.append(additional_data[i])
-                if len(additional_data[i].shape) == 2:
+                elif len(additional_data[i].shape) == 2:
                     self.additional_data.append(additional_data[i])
                 elif len(additional_data[i].shape) == 3:
                     self.additional_data.append(
@@ -180,12 +184,12 @@ class EmitEcostressDataset(Dataset):
                     )
                 else:
                     raise ValueError(
-                        f'Item at index {i} in additional_data must be'
+                        f'Item at index {i} in additional_data must be '
                         '1-, 2-, or 3-dimensional, '
                         f'found {len(additional_data[i].shape)}-dimensional'
                     )
 
-        if additional_data_paths != None:
+        if additional_data_paths is not None:
             for i in range(len(additional_data_paths)):
                 if additional_data_paths[i][-4:] == '.npy':
                     additional_data_element = np.load(file=additional_data_paths[i])
@@ -243,7 +247,9 @@ class EmitEcostressDataset(Dataset):
             self.emit_data.shape[1] +
             sum(
                 [
-                    additional_data_element.shape[1]
+                    additional_data_element.shape[1] if (
+                        len(additional_data_element.shape) > 1
+                    ) else 1
                     for additional_data_element in self.additional_data
                 ]
             )
@@ -265,8 +271,13 @@ class EmitEcostressDataset(Dataset):
     def __getitem__(self, index: int) -> tuple[Tensor, Tensor]:
         x = self.emit_data[index, :]
         for additional_data_element in self.additional_data:
-            x = concatenate(
-                [x, additional_data_element[index, :]], dim=1 # type: ignore
-            )
+            if len(additional_data_element.shape) > 1:
+                x = concatenate(
+                    [x, additional_data_element[index, :]], dim=1
+                )
+            elif len(additional_data_element.shape) == 1:
+                x = concatenate(
+                    [x, unsqueeze(additional_data_element[index], 0)], dim=-1
+                )
         y = self.ecostress_data[index]
-        return x, y # type: ignore
+        return x, y
