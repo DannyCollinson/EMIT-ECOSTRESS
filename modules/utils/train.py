@@ -65,15 +65,15 @@ def train(
                                str(epoch + start_epoch)
                 )
                 print(
-                    f'Epoch {print_epoch}\t\t',
-                    f'Train Loss: {train_loss[epoch]:.5}\t\t',
-                    f'Val Loss: {val_loss[epoch]:.5} \t\t',
-                    f'Avg Error: {avg_error:.5}\t\t',
+                    f'Epoch {print_epoch}\t',
+                    f'Train Loss: {train_loss[epoch]:.5}\t',
+                    f'Val Loss: {val_loss[epoch]:.5} \t',
+                    f'Avg Error: {avg_error:.5}\t',
                     end='',
                 )
                 if scheduler is not None:
                     print(
-                        f'LR: {optimizer.param_groups[0]["lr"]:.6}\t\t', end=''
+                        f'LR: {optimizer.param_groups[0]["lr"]:.6}\t', end=''
                     )
                 else:
                     print('', end='')
