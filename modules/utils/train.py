@@ -20,13 +20,14 @@ def train(
 ) -> tuple[np.ndarray[np.float64, Any], np.ndarray[np.float64, Any]]:
     begin: float = time.time()
     t: float = begin
-    current_epoch: int = 0
+    start_epoch: int = 0
     if preexisting_losses is not None:
-        current_epoch = len(preexisting_losses[0]) - 1
-    train_loss: np.ndarray[np.float64, Any] = np.zeros(shape=n_epochs+1)
-    val_loss: np.ndarray[np.float64, Any] = np.zeros(shape=n_epochs+1)
+        start_epoch = len(preexisting_losses[0])
+    current_epoch = start_epoch
+    train_loss = np.zeros(shape=n_epochs + int(start_epoch == 0))
+    val_loss = np.zeros(shape=n_epochs + int(start_epoch == 0))
     try:
-        for epoch in range(current_epoch, current_epoch + n_epochs + 1):
+        for epoch in range(n_epochs + int(start_epoch == 0)):
             current_epoch = epoch
             model.train()
             for x, y in train_loader:
@@ -35,12 +36,12 @@ def train(
                 y = y.to(dtype=torch.float, device=device)
                 x = model(x)
                 loss = loss_fn(x, y.squeeze())
-                if epoch != 0:
+                if epoch > 0 or start_epoch != 0:
                     loss.backward()
                     optimizer.step()
                 train_loss[epoch] += (
                     loss.item() /
-                    len(train_loader)
+                    len(train_loader.dataset)
                 )
 
             if val_loader is not None:
@@ -52,32 +53,36 @@ def train(
                         x = model(x)
                         val_loss[epoch] += (
                             loss_fn(x, y.squeeze()).item() /
-                            len(val_loader)
+                            len(val_loader.dataset)
                         )
-
-            if epoch != 0 and scheduler is not None:
-                scheduler.step(val_loss[epoch])
 
             if (
                 loss_interval is not None
                 and (epoch % loss_interval == 0 or epoch == n_epochs - 1)
             ):
-                if preexisting_losses is not None:
-                    results_epoch = len(preexisting_losses[0]) - 1 + epoch
+                avg_error = 11.853 * np.sqrt(val_loss[epoch])
+                print_epoch = ("0" * (3 - len(str(epoch + start_epoch))) + 
+                               str(epoch + start_epoch)
+                )
                 print(
-                    f'Epoch {"0" * (3 - len(str(epoch))) + str(epoch)}\t\t'
-                    f'Train Loss: {train_loss[epoch]:.5}\t\t'
-                    f'Val Loss: {val_loss[epoch]:.5} \t\t',
+                    f'Epoch {print_epoch}\t',
+                    f'Train Loss: {train_loss[epoch]:.5}\t',
+                    f'Val Loss: {val_loss[epoch]:.5} \t',
+                    f'Avg Error: {avg_error:.5}\t',
                     end='',
                 )
                 if scheduler is not None:
                     print(
-                        f'LR: {optimizer.param_groups[0]["lr"]:.6}\t\t', end=''
+                        f'LR: {optimizer.param_groups[0]["lr"]:.6}\t', end=''
                     )
                 else:
                     print('', end='')
-                print(f'Time: {time.time() - t}')
+                print(f'Time: {time.time() - t:.2}')
                 t = time.time()
+            
+            if (epoch > 0 or start_epoch != 0) and scheduler is not None:
+                scheduler.step(val_loss[epoch])
+                
     except KeyboardInterrupt:
         print('\nTraining interrupted by user')
         train_loss = train_loss[:current_epoch]
