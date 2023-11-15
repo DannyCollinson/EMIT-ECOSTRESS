@@ -60,7 +60,7 @@ def train(
                 loss_interval is not None
                 and (epoch % loss_interval == 0 or epoch == n_epochs - 1)
             ):
-                avg_error = 11.853 * np.sqrt(val_loss[epoch])
+                avg_error = 5.027992962512524 * np.sqrt(val_loss[epoch])
                 print_epoch = ("0" * (3 - len(str(epoch + start_epoch))) + 
                                str(epoch + start_epoch)
                 )
