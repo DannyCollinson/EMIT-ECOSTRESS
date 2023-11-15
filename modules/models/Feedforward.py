@@ -9,30 +9,34 @@ class SimpleFeedforwardModel(nn.Module):
     '''
     def __init__(self, input_dim: int) -> None:
         super(SimpleFeedforwardModel, self).__init__()
-        self.linear1 = nn.Linear(in_features=input_dim, out_features=512)
+        self.linear1 = nn.Linear(in_features=input_dim, out_features=1024)
         
         self.linear2 = nn.Linear(
-            in_features=self.linear1.out_features, out_features=256
+            in_features=self.linear1.out_features, out_features=512
         )
         
         self.linear3 = nn.Linear(
-            in_features=self.linear2.out_features, out_features=128
+            in_features=self.linear2.out_features, out_features=256
         )
         
         self.linear4 = nn.Linear(
-            in_features=self.linear3.out_features, out_features=64
+            in_features=self.linear3.out_features, out_features=128
         )
         
         self.linear5 = nn.Linear(
-            in_features=self.linear4.out_features, out_features=32
+            in_features=self.linear4.out_features, out_features=64
         )
         
         self.linear6 = nn.Linear(
-            in_features=self.linear5.out_features, out_features=16
+            in_features=self.linear5.out_features, out_features=32
+        )
+        
+        self.linear7 = nn.Linear(
+            in_features=self.linear6.out_features, out_features=16
         )
         
         self.linear_output = nn.Linear(
-            in_features=self.linear6.out_features, out_features=1
+            in_features=self.linear7.out_features, out_features=1
         )
 
         self.layernorm1 = nn.LayerNorm(self.linear1.out_features)
@@ -41,6 +45,7 @@ class SimpleFeedforwardModel(nn.Module):
         self.layernorm4 = nn.LayerNorm(self.linear4.out_features)
         self.layernorm5 = nn.LayerNorm(self.linear5.out_features)
         self.layernorm6 = nn.LayerNorm(self.linear6.out_features)
+        self.layernorm7 = nn.LayerNorm(self.linear7.out_features)
 
 
     def forward(self, x: Tensor) -> Tensor:
@@ -50,6 +55,7 @@ class SimpleFeedforwardModel(nn.Module):
         x = self.layernorm4(F.relu(input=self.linear4(x)))
         x = self.layernorm5(F.relu(input=self.linear5(x)))
         x = self.layernorm6(F.relu(input=self.linear6(x)))
+        x = self.layernorm7(F.relu(input=self.linear7(x)))
         x = self.linear_output(x)
         return x.squeeze()
 
