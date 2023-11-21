@@ -22,6 +22,7 @@ class EmitEcostressDataset(Dataset):
         ecostress_data: Union[np.ndarray, None] = None,
         ecostress_center: Union[float, None] = None,
         ecostress_scale: Union[float, None] = None,
+        additional_data_boolean = False,
         additional_data_paths: Union[tuple[str], None] = None,
         additional_data: Union[tuple[np.ndarray], None] = None,
         device: str = 'cpu',
@@ -166,7 +167,8 @@ class EmitEcostressDataset(Dataset):
         #     f'got {self.emit_data.shape[0]} and {self.ecostress_data.shape[0]}'
 
         self.additional_data = []
-        if additional_data is not None:
+
+        if additional_data_boolean:
             for i in range(len(additional_data)):
                 if len(additional_data[i].shape) == 1:
                     self.additional_data.append(additional_data[i])
