@@ -32,6 +32,12 @@ def load_and_merge_pickle(path):
 
     return full_dataset
 
+# def join_path(relative_path: str) -> str:
+#     return os.path.join(base_data_path, relative_path)
+
+def pickle_load(pth: str):  # -> pickled_file_contents
+    return pickle.load(open(pth, 'rb'))
+
 def sandbox():
     """
     Sandbox for testing code snippets
@@ -41,16 +47,17 @@ def sandbox():
 
     """
     # Initialize RNG
-    rng = np.random.default_rng(seed=1352)
+    rng = np.random.default_rng(seed=42)
 
     # Check if running with GPU runtime
     # torch.cuda.is_available()
 
-    project_path = '/Users/gabriellatwombly/Desktop/CS 101/EMIT-ECOSTRESS/data'
+    project_path = '/Users/gabriellatwombly/Desktop/CS 101/EMIT-ECOSTRESS/data/for_dim_reduction.pkl'
 
-    emit_data = torch.tensor(load_and_merge_pickle(project_path), dtype=torch.float32)
-
-    print("done")
+    emit_data_uncentered = torch.tensor(pickle_load(project_path), dtype=torch.float32)
+    emit_data = emit_data_uncentered - emit_data_uncentered.mean(axis=0)
+    print(f"The shape of the EMIT data is {emit_data.shape}")
+    print("Loading data done.")
     # def pickle_save(obj: object, relative_path: str) -> None:
     #     pickle.dump(obj, open(join_path(relative_path), 'wb'))
 
@@ -63,23 +70,52 @@ def sandbox():
     # emit_data = pickle.load(open("data/emit_clean.pkl", "rb"))
     # print("done")
 
-    print(emit_data.shape)
+    # print(emit_data.shape)
 
     train_data_subset, val_data_subset = torch.utils.data.random_split(emit_data, [0.8, 0.2])
     train_data = emit_data[train_data_subset.indices]
     val_data = emit_data[val_data_subset.indices]
 
-    print(val_data.dtype)
+    print(f"The shape of the EMIT train data is {train_data.shape}")
+    print(f"The shape of the EMIT val data is {val_data.shape}")
+    print(f"The data type of val data is: {val_data.dtype}")
 
     # Create AutoEncoder
-    input_dim = 244
-    encoding_dim = 16
+    input_dim = 244 # size of the input dimensions
+    encoding_dim = 20 # latent embedding dimensions
     model = AutoEncoderWrapper(input_dim, encoding_dim)
     model.fit(train_data, val_data)
     model.model.plotLosses()
-    latent_state = model.model.z.detach()
-    model.model.generate_r2()
+
+    print("Passing data through encoder to get latent embeddings...")
+    encoder = model.model.encoder
+    encoder.eval()
+    latent_state = model.model.encoder(emit_data)
+
+    print("Calculating average R2 values across samples...")
+    # print("r2: " + str(model.model.generate_r2()))
+
+    print("Plotting heatmaps of input and reconstructed input...")
     # model.model.plot_x_xrecon()
+
+    print(latent_state.shape)
+
+    # input_dim = 244
+    # encoding_dim = 16
+    # r2_array = []
+
+    # for dim in range(1, 17):
+    #     model = AutoEncoderWrapper(input_dim, dim)
+    #     model.fit(train_data, val_data)
+    #     r2 = model.model.generate_r2()
+    #     r2_array.append(r2)
+    #     print("dim: " + str(dim) + ", r2 score: " + str(r2))
+
+    # plt.plot(range(1,17), r2_array, marker='o')
+    # plt.xlabel('Encoding dimension')
+    # plt.ylabel('R^2 Score')
+    # plt.title('Comparing R^2 Score of Differing Encoding Dimensions')
+    # plt.show()
 
     # device = torch.device("cuda:0")
 
