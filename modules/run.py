@@ -74,7 +74,7 @@ class runModel():
 
     def get_data_arrays(self):
         self.emit_train, self.emit_val, self.eco_train, self.eco_val, self.elev_train, self.elev_val = utils.loading.run_script(
-            self.base_data_path,self.train_splits, self.val_splits, self.data_type, self.batch_size, self.elevation_boolean)
+           self.train_splits, self.val_splits, self.data_type, self.batch_size, self.elevation_boolean)
 
         
     def create_dataloader(self):
@@ -84,6 +84,7 @@ class runModel():
             ecostress_data=self.eco_train,
             ecostress_center=None,
             ecostress_scale=None,
+            additional_data_boolean = False,
             additional_data=(self.elev_train,),
             device=self.device,
         )
@@ -94,10 +95,12 @@ class runModel():
             ecostress_data=self.eco_val,
             ecostress_center=None,
             ecostress_scale=None,
+            additional_data_boolean = False,
             additional_data=(self.elev_val,),
             device=self.device,
         )
 
+        
         self.train_loader = DataLoader(
             dataset=self.train_dataset, batch_size=self.batch_size, drop_last=True
         )
@@ -113,7 +116,8 @@ class runModel():
         n_epochs = 200
         if self.model_type == "cnn":
             model = models.cnn.SimpleCNN(
-                ...
+                input_channels=self.train_dataset.input_dim,
+                output_size=1
             )
         elif self.model_type == 'attention':
             model = models.Attention.TransformerModel(
@@ -123,12 +127,15 @@ class runModel():
             model = models.Feedforward.SimpleFeedforwardModel(
                 input_dim=self.train_dataset.input_dim
             )
+        fuse = False
 
         if self.device == 'cuda':
             model = model.cuda()
+            fuse = True
 
+        
         optimizer = optim.Adam(
-            params=model.parameters(), lr=0.0001, weight_decay=0, fused=True
+            params=model.parameters(), lr=0.0001, weight_decay=0, fused=fuse
         )
 
         scheduler = optim.lr_scheduler.ReduceLROnPlateau(
@@ -153,18 +160,22 @@ class runModel():
 
 
     def run_model(self):
+        
         self.get_data_arrays()
+        print("Grabbed data arrays")
         self.create_dataloader()
+        print("Created data loader")
         self.model()
+        print("Model Finished running")
         return self.train_loss, self.val_loss
 
 
 if __name__ == "__main__":
     # TODO "cnn" || "attention" || "feedforward"
-    model_type = "feedforward"
+    model_type = "cnn"
     # TODO "raw" || "PCA" || "AE"
     data_type = "raw"
-    model_class = runModel("cnn", False, "raw")
+    model_class = runModel(model_type, False, data_type)
     train_loss, val_loss = model_class.run_model()
 
 
