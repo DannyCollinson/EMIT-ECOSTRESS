@@ -382,13 +382,13 @@ class CNNDataset(Dataset):
             self.ecostress_center = ecostress_center
             self.ecostress_scale = ecostress_scale
         elif ecostress_center is None and ecostress_scale is None:
-            self.ecostress_center = np.mean(self.ecostress_data, axis=0)
-            self.ecostress_scale = np.std(a=self.ecostress_data, axis=0)
+            self.ecostress_center = np.mean(self.ecostress_data)
+            self.ecostress_scale = np.std(self.ecostress_data)
         elif ecostress_center is not None:
             self.ecostress_center = ecostress_center
-            self.ecostress_scale = np.std(a=self.ecostress_data, axis=0)
+            self.ecostress_scale = np.std(self.ecostress_data)
         else:
-            self.ecostress_center = np.mean(self.ecostress_data, axis=0)
+            self.ecostress_center = np.mean(self.ecostress_data)
             self.ecostress_scale = ecostress_scale
 
         self.ecostress_data = (
