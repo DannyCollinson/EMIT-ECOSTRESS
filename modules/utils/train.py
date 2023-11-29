@@ -22,7 +22,8 @@ def train(
     begin: float = time.time()
     t: float = begin
     start_epoch: int = 0
-    if preexisting_losses is not None:
+
+    if preexisting_losses[0] is not None:
         start_epoch = len(preexisting_losses[0])
     current_epoch = start_epoch
     train_loss = np.zeros(shape=n_epochs + int(start_epoch == 0))
