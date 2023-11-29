@@ -11,6 +11,7 @@ def train(
     optimizer,
     scheduler,
     loss_fn,
+    std_dev: float,
     train_loader: DataLoader,
     val_loader: Union[DataLoader, None] = None,
     n_epochs: int = 10,
@@ -40,10 +41,7 @@ def train(
                 if epoch > 0 or start_epoch != 0:
                     loss.backward()
                     optimizer.step()
-                train_loss[epoch] += (
-                    loss.item() /
-                    len(train_loader.dataset)
-                )
+                train_loss[epoch] += loss.item() / len(train_loader)
 
             if val_loader is not None:
                 model.eval()
@@ -53,15 +51,14 @@ def train(
                         y = y.to(dtype=torch.float, device=device)
                         x = model(x)
                         val_loss[epoch] += (
-                            loss_fn(x, y.squeeze()).item() /
-                            len(val_loader.dataset)
+                            loss_fn(x, y.squeeze()).item() / len(val_loader)
                         )
 
             if (
                 loss_interval is not None
                 and (epoch % loss_interval == 0 or epoch == n_epochs - 1)
             ):
-                avg_error = 5.027992962512524 * np.sqrt(val_loss[epoch])
+                avg_error = std_dev * np.sqrt(val_loss[epoch])
                 print_epoch = ("0" * (3 - len(str(epoch + start_epoch))) + 
                                str(epoch + start_epoch)
                 )
