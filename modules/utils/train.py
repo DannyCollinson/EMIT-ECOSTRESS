@@ -11,7 +11,6 @@ def train(
     optimizer,
     scheduler,
     loss_fn,
-    std_dev: float,
     train_loader: DataLoader,
     val_loader: Union[DataLoader, None] = None,
     n_epochs: int = 10,
@@ -22,8 +21,11 @@ def train(
     begin: float = time.time()
     t: float = begin
     start_epoch: int = 0
+    
+    train_std = train_loader.dataset.ecostress_scale
+    val_std = val_loader.dataset.ecostress_scale
 
-    if preexisting_losses[0] is not None:
+    if preexisting_losses is not None:
         start_epoch = len(preexisting_losses[0])
     current_epoch = start_epoch
     train_loss = np.zeros(shape=n_epochs + int(start_epoch == 0))
@@ -58,24 +60,30 @@ def train(
                 loss_interval is not None
                 and (epoch % loss_interval == 0 or epoch == n_epochs - 1)
             ):
-                avg_error = std_dev * np.sqrt(val_loss[epoch])
+                train_error = np.sqrt(train_loss[epoch])
+                val_error = np.sqrt(val_loss[epoch])
                 print_epoch = ("0" * (3 - len(str(epoch + start_epoch))) + 
                                str(epoch + start_epoch)
                 )
                 print(
-                    f'Epoch {print_epoch}\t',
-                    f'Train Loss: {train_loss[epoch]:.5}\t',
-                    f'Val Loss: {val_loss[epoch]:.5} \t',
-                    f'Avg Error: {avg_error:.5}\t',
+                    f'Epoch {print_epoch}:    ',
+                    'Train (loss, std, K):  '
+                    f'{train_loss[epoch]:6.5}, ',
+                    f'{train_error:6.5}, ',
+                    f'{train_std * train_error:6.5}   \t',
+                    'Val (loss, std, K):  '
+                    f'{val_loss[epoch]:6.5}, ' ,
+                    f'{val_error:6.5}, ',
+                    f'{val_std * val_error:6.5}   \t',
                     end='',
                 )
                 if scheduler is not None:
                     print(
-                        f'LR: {optimizer.param_groups[0]["lr"]:.6}\t', end=''
+                        f'LR: {optimizer.param_groups[0]["lr"]:6.5}\t', end=''
                     )
                 else:
                     print('', end='')
-                print(f'Time: {time.time() - t:.2}')
+                print(f'Time: {time.time() - t:3.3}')
                 t = time.time()
             
             if (epoch > 0 or start_epoch != 0) and scheduler is not None:
