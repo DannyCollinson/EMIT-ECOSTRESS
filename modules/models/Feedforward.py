@@ -108,17 +108,117 @@ class ToyModel(nn.Module):
 
         x = self.linear_output(x)
         return x.squeeze()
-    
+
+
+
 class LinearModel(nn.Module):
     '''
-    Defines a pytorch model made up of dense linear layers and ReLU activation
+    Defines a pytorch model that does linear regression
     '''
-    def __init__(self, input_dim: int) -> None:
+    def __init__(
+            self, input_dim: int, radius: int, dropout_rate: float = 0
+    ) -> None:
         super(LinearModel, self).__init__()
         self.linear_output = nn.Linear(
-            in_features=input_dim, out_features=1
+                    in_features=(((2 * radius) + 1)**2) * input_dim,
+                    out_features=1,
+        )
+        
+        self.dropout_rate = dropout_rate
+
+
+    def forward(self, x: Tensor) -> Tensor:
+        return F.dropout(self.linear_output(x), self.dropout_rate).squeeze()
+    
+    
+    
+class PatchToPixelModel(nn.Module):
+    '''
+    Defines a pytorch model made up of dense linear layers and ReLU activation
+    that predicts the temperature at one pixel of interest from a patch of
+    input data surrounding and including that pixel
+    '''
+    def __init__(
+            self, input_dim: int, radius: int, dropout_rate: float=0.0
+    ) -> None:
+        super(PatchToPixelModel, self).__init__()
+        self.dropout_rate = dropout_rate
+        
+        self.linear1 = nn.Linear(
+            in_features=input_dim * ((2 * radius) + 1)**2, out_features=4096
+        )
+        
+        self.layernorm1 = nn.LayerNorm(self.linear1.out_features)
+
+        self.linear2 = nn.Linear(
+            in_features=self.linear1.out_features, out_features=2048
+        )
+        
+        self.layernorm2 = nn.LayerNorm(self.linear2.out_features)
+        
+        self.linear3 = nn.Linear(
+            in_features=self.linear2.out_features, out_features=1024
+        )
+        
+        self.layernorm3 = nn.LayerNorm(self.linear3.out_features)
+
+        self.linear4 = nn.Linear(
+            in_features=self.linear3.out_features, out_features=1024
+        )
+
+        self.layernorm4 = nn.LayerNorm(self.linear4.out_features)
+
+        self.linear5 = nn.Linear(
+            in_features=self.linear4.out_features, out_features=512
+        )
+        
+        self.layernorm5 = nn.LayerNorm(self.linear5.out_features)
+
+        self.linear6 = nn.Linear(
+            in_features=self.linear5.out_features, out_features=256
+        )
+
+        self.layernorm6 = nn.LayerNorm(self.linear6.out_features)
+
+        # self.linear7 = nn.Linear(
+        #     in_features=self.linear6.out_features, out_features=64
+        # )
+        
+        # self.layernorm7 = nn.LayerNorm(self.linear7.out_features)
+
+        self.linear_output = nn.Linear(
+            in_features=self.linear6.out_features, out_features=1
         )
 
 
     def forward(self, x: Tensor) -> Tensor:
-        return self.linear_output(x).squeeze()
+        x = F.dropout(
+            self.layernorm1(F.relu(input=self.linear1(x))),
+            p=self.dropout_rate
+        )
+        x = F.dropout(
+            self.layernorm2(F.relu(input=self.linear2(x))),
+            p=self.dropout_rate
+        )
+        x = F.dropout(
+            self.layernorm3(F.relu(input=self.linear3(x))),
+            p=self.dropout_rate
+        )
+        x = F.dropout(
+            self.layernorm4(F.relu(input=self.linear4(x))),
+            p=self.dropout_rate
+        )
+        x = F.dropout(
+            self.layernorm5(F.relu(input=self.linear5(x))),
+            p=self.dropout_rate
+        )
+        x = F.dropout(
+            self.layernorm6(F.relu(input=self.linear6(x))),
+            p=self.dropout_rate
+        )
+        # x = F.dropout(
+        #     self.layernorm7(F.relu(input=self.linear7(x))),
+        #     p=self.dropout_rate
+        # )
+        x = self.linear_output(x)
+        return x.squeeze()
