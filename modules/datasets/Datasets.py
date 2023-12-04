@@ -578,6 +578,7 @@ class PatchToPixelDataset(Dataset):
         additional_data_paths: Union[tuple[str], None] = None,
         additional_data: Union[tuple[np.ndarray], None] = None,
         radius: int = 3,
+        boundary_width: int = 16,
     ) -> None:
         '''
         Builds a pytorch dataset for predicting ECOSTRESS LST
@@ -602,6 +603,8 @@ class PatchToPixelDataset(Dataset):
         radius: number of pixels in each direction around the center pixel
                 to include for each training point, i.e., the block of input
                 is of shape ((2 * radius) + 1) x ((2 * radius) + 1) x depth
+        boundary_width: number of pixels on each edge of the dataset to ignore
+                        as part of the indices of the dataset that get used
 
         * Note that emit_data and ecostress_data will take precedence
           over emit_data_path and ecostress_data_path, respectively,
@@ -772,8 +775,8 @@ class PatchToPixelDataset(Dataset):
             enumerate(iterable=self.additional_data)
         ):
             if i >= len(self.additional_data):
-                index: int = i - len(self.additional_data)
-                message: str = f'loaded from index {index} in additional_data_paths'
+                index = i - len(self.additional_data)
+                message = f'loaded from index {index} in additional_data_paths'
             else:
                 index = i
                 message = f'from index {index} in additional_data'
@@ -788,7 +791,8 @@ class PatchToPixelDataset(Dataset):
 
         self.input_dim: int = (
             self.emit_data.shape[2] +
-            1 +  # from location encoding d defined below
+            # removing positional encoding since it is unneccesary
+            # 1 +  # from location encoding d defined below
             sum(
                 [
                     additional_data_element.shape[2] if (
@@ -800,30 +804,33 @@ class PatchToPixelDataset(Dataset):
         )
         
         self.radius = radius
+        self.boundary_width = boundary_width
         
-        self.d = np.array(
-            [
-                [
-                        (i**2 + j**2)**(1/2)
-                        for j in range(-self.radius, self.radius + 1)
-                ] for i in range(-self.radius, self.radius + 1)
-            ]
-        )
+        # removing positional encoding since it is unneccesary
+        # self.d = np.array(
+        #     [
+        #         [
+        #                 (i**2 + j**2)**(1/2)
+        #                 for j in range(-self.radius, self.radius + 1)
+        #         ] for i in range(-self.radius, self.radius + 1)
+        #     ]
+        # )
         
         self.emit_data = tensor(self.emit_data)
         self.ecostress_data = tensor(self.ecostress_data)
         for i, additional_data_element in enumerate(self.additional_data):
             self.additional_data[i] = tensor(additional_data_element)
-        self.d = tensor(self.d)
+        # removing positional encoding since it is unneccesary
+        # self.d = tensor(self.d)
 
 
     def __len__(self) -> int:
         return (
             len(self.ecostress_data.flatten()) - 
-            2 * self.radius * (
+            2 * self.boundary_width * (
                 self.ecostress_data.shape[0] + 
                 self.ecostress_data.shape[1] - 
-                2 * self.radius
+                2 * self.boundary_width
             )
         )
 
@@ -831,9 +838,13 @@ class PatchToPixelDataset(Dataset):
     def __getitem__(self, index: int) -> tuple[Tensor, Tensor]:
         real_index = (
             index +
-            self.radius * self.ecostress_data.shape[1] +
-            self.radius +
-            2 * self.radius * (index // self.ecostress_data.shape[1])
+            self.boundary_width * self.ecostress_data.shape[1] +
+            self.boundary_width +
+            2 * self.boundary_width * (
+                index // (
+                    self.ecostress_data.shape[1] - 2 * self.boundary_width
+                )
+            )
         )
         
         return_indices = np.array(
@@ -845,7 +856,7 @@ class PatchToPixelDataset(Dataset):
             ],
             dtype=int,
         ).flatten()
-        
+                
         return_indices = np.unravel_index(
             return_indices, self.ecostress_data.shape
         )
@@ -854,9 +865,10 @@ class PatchToPixelDataset(Dataset):
             (2 * self.radius + 1, 2 * self.radius + 1, self.emit_data.shape[2])
         )
         
-        x = concatenate(
-            [x, unsqueeze(self.d, dim=-1)], dim=-1
-        )
+        # removing positional encoding as it is unneccesary
+        # x = concatenate(
+        #     [x, unsqueeze(self.d, dim=-1)], dim=-1
+        # )
         
         for additional_data_element in self.additional_data:
             x = concatenate(

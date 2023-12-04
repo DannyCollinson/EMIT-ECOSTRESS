@@ -115,6 +115,7 @@ class SemanticSegmenter(nn.Module):
             kernel_size=3,
             stride=2,
             padding=1,
+            padding_mode='zeros',
         )
         
         self.down2 = nn.Conv2d(
@@ -123,6 +124,7 @@ class SemanticSegmenter(nn.Module):
             kernel_size=3,
             stride=2,
             padding=1,
+            padding_mode='zeros',
         )
         
         self.down3 = nn.Conv2d(
@@ -131,6 +133,7 @@ class SemanticSegmenter(nn.Module):
             kernel_size=3,
             stride=2,
             padding=1,
+            padding_mode='zeros',
         )
         
         self.down4 = nn.Conv2d(
@@ -139,6 +142,7 @@ class SemanticSegmenter(nn.Module):
             kernel_size=3,
             stride=2,
             padding=1,
+            padding_mode='zeros',
         )
         
         self.down5 = nn.Conv2d(
@@ -147,6 +151,7 @@ class SemanticSegmenter(nn.Module):
             kernel_size=3,
             stride=2,
             padding=1,
+            padding_mode='zeros',
         )
         
         self.midlinear1 = nn.Linear(
@@ -163,6 +168,7 @@ class SemanticSegmenter(nn.Module):
             kernel_size=3,
             stride=2,
             padding=1,
+            padding_mode='zeros',
             output_padding=1,
         )
         
@@ -172,6 +178,7 @@ class SemanticSegmenter(nn.Module):
             kernel_size=3,
             stride=2,
             padding=1,
+            padding_mode='zeros',
             output_padding=1,
         )
 
@@ -181,6 +188,7 @@ class SemanticSegmenter(nn.Module):
             kernel_size=3,
             stride=2,
             padding=1,
+            padding_mode='zeros',
             output_padding=1,
         )
         
@@ -190,6 +198,7 @@ class SemanticSegmenter(nn.Module):
             kernel_size=3,
             stride=2,
             padding=1,
+            padding_mode='zeros',
             output_padding=1,
         )
         
@@ -199,6 +208,7 @@ class SemanticSegmenter(nn.Module):
             kernel_size=3,
             stride=2,
             padding=1,
+            padding_mode='zeros',
             output_padding=1,
         )
         
@@ -252,6 +262,7 @@ class UNet_Temp(nn.Module):
             kernel_size=3,
             stride=2,
             padding=1,
+            padding_mode='zeros',
         )
         
         self.down2 = nn.Conv2d(
@@ -260,6 +271,7 @@ class UNet_Temp(nn.Module):
             kernel_size=3,
             stride=2,
             padding=1,
+            padding_mode='zeros',
         )
         
         self.down3 = nn.Conv2d(
@@ -268,6 +280,7 @@ class UNet_Temp(nn.Module):
             kernel_size=3,
             stride=2,
             padding=1,
+            padding_mode='zeros',
         )
         
         self.down4 = nn.Conv2d(
@@ -276,6 +289,7 @@ class UNet_Temp(nn.Module):
             kernel_size=3,
             stride=2,
             padding=1,
+            padding_mode='zeros',
         )
         
         self.down5 = nn.Conv2d(
@@ -284,6 +298,7 @@ class UNet_Temp(nn.Module):
             kernel_size=3,
             stride=2,
             padding=1,
+            padding_mode='zeros',
         )
         
         self.up4 = nn.ConvTranspose2d(
@@ -292,6 +307,7 @@ class UNet_Temp(nn.Module):
             kernel_size=3,
             stride=2,
             padding=1,
+            padding_mode='zeros',
             output_padding=1,
         )
         
@@ -301,6 +317,7 @@ class UNet_Temp(nn.Module):
             kernel_size=3,
             stride=2,
             padding=1,
+            padding_mode='zeros',
             output_padding=1,
         )
 
@@ -310,6 +327,7 @@ class UNet_Temp(nn.Module):
             kernel_size=3,
             stride=2,
             padding=1,
+            padding_mode='zeros',
             output_padding=1,
         )
         
@@ -319,6 +337,7 @@ class UNet_Temp(nn.Module):
             kernel_size=3,
             stride=2,
             padding=1,
+            padding_mode='zeros',
             output_padding=1,
         )
         
@@ -328,6 +347,7 @@ class UNet_Temp(nn.Module):
             kernel_size=3,
             stride=2,
             padding=1,
+            padding_mode='zeros',
             output_padding=1,
         )
         
@@ -377,6 +397,7 @@ class UNetLarge(nn.Module):
             kernel_size=3,
             stride=2,
             padding=1,
+            padding_mode='zeros',
         )
         
         self.maxpool1 = nn.MaxPool2d(
@@ -389,6 +410,7 @@ class UNetLarge(nn.Module):
             kernel_size=3,
             stride=2,
             padding=1,
+            padding_mode='zeros',
         )
         
         self.maxpool2 = nn.MaxPool2d(
@@ -401,6 +423,7 @@ class UNetLarge(nn.Module):
             kernel_size=3,
             stride=2,
             padding=1,
+            padding_mode='zeros',
         )
         
         self.maxpool3 = nn.MaxPool2d(
@@ -413,6 +436,7 @@ class UNetLarge(nn.Module):
             kernel_size=5,
             stride=2,
             padding=1,
+            padding_mode='zeros',
         )
         
         self.maxpool4 = nn.MaxPool2d(
@@ -425,6 +449,7 @@ class UNetLarge(nn.Module):
             kernel_size=5,
             stride=2,
             padding=1,
+            padding_mode='zeros',
         )
         
         self.maxpool5 = nn.MaxPool2d(
@@ -437,6 +462,7 @@ class UNetLarge(nn.Module):
             kernel_size=5,
             stride=2,
             padding=1,
+            padding_mode='zeros',
         )
         
         self.maxpool6 = nn.MaxPool2d(
@@ -449,6 +475,7 @@ class UNetLarge(nn.Module):
             kernel_size=7,
             stride=2,
             padding=1,
+            padding_mode='zeros',
         )
         
         self.maxpool7 = nn.MaxPool2d(
@@ -461,6 +488,7 @@ class UNetLarge(nn.Module):
             kernel_size=7,
             stride=2,
             padding=1,
+            padding_mode='zeros',
         )
         
         self.maxpool8 = nn.MaxPool2d(
@@ -473,6 +501,7 @@ class UNetLarge(nn.Module):
             kernel_size=3,
             stride=2,
             padding=1,
+            padding_mode='zeros',
         )
         
         self.up9 = nn.ConvTranspose2d(
@@ -481,6 +510,7 @@ class UNetLarge(nn.Module):
             kernel_size=7,
             stride=2,
             padding=1,
+            padding_mode='zeros',
             output_padding=1,
         )
         
@@ -494,6 +524,7 @@ class UNetLarge(nn.Module):
             kernel_size=7,
             stride=2,
             padding=1,
+            padding_mode='zeros',
             output_padding=1,
         )
         
@@ -507,6 +538,7 @@ class UNetLarge(nn.Module):
             kernel_size=7,
             stride=2,
             padding=1,
+            padding_mode='zeros',
             output_padding=1,
         )
         
@@ -520,6 +552,7 @@ class UNetLarge(nn.Module):
             kernel_size=5,
             stride=2,
             padding=1,
+            padding_mode='zeros',
             output_padding=1,
         )
         
@@ -533,6 +566,7 @@ class UNetLarge(nn.Module):
             kernel_size=5,
             stride=2,
             padding=1,
+            padding_mode='zeros',
             output_padding=1,
         )
         
@@ -546,6 +580,7 @@ class UNetLarge(nn.Module):
             kernel_size=5,
             stride=2,
             padding=1,
+            padding_mode='zeros',
             output_padding=1,
         )
         
@@ -559,6 +594,7 @@ class UNetLarge(nn.Module):
             kernel_size=3,
             stride=2,
             padding=1,
+            padding_mode='zeros',
             output_padding=1,
         )
         
@@ -572,6 +608,7 @@ class UNetLarge(nn.Module):
             kernel_size=3,
             stride=2,
             padding=1,
+            padding_mode='zeros',
             output_padding=1,
         )
         
@@ -585,6 +622,7 @@ class UNetLarge(nn.Module):
             kernel_size=3,
             stride=2,
             padding=1,
+            padding_mode='zeros',
             output_padding=1,
         )
         
@@ -689,6 +727,7 @@ class UNet(nn.Module):
             kernel_size=3,
             stride=1,
             padding=1,
+            padding_mode='zeros',
         )
         
         self.maxpool1 = nn.MaxPool2d(
@@ -701,6 +740,7 @@ class UNet(nn.Module):
             kernel_size=3,
             stride=1,
             padding=1,
+            padding_mode='zeros',
         )
         
         self.maxpool2 = nn.MaxPool2d(
@@ -713,6 +753,7 @@ class UNet(nn.Module):
             kernel_size=3,
             stride=1,
             padding=1,
+            padding_mode='zeros',
         )
         
         self.maxpool3 = nn.MaxPool2d(
@@ -725,6 +766,7 @@ class UNet(nn.Module):
             kernel_size=3,
             stride=1,
             padding=1,
+            padding_mode='zeros',
         )
         
         self.maxpool4 = nn.MaxPool2d(
@@ -737,6 +779,7 @@ class UNet(nn.Module):
             kernel_size=3,
             stride=1,
             padding=1,
+            padding_mode='zeros',
         )
         
         self.up5 = nn.ConvTranspose2d(
@@ -745,6 +788,7 @@ class UNet(nn.Module):
             kernel_size=3,
             stride=1,
             padding=1,
+            padding_mode='zeros',
             output_padding=0,
         )
         
@@ -758,6 +802,7 @@ class UNet(nn.Module):
             kernel_size=3,
             stride=1,
             padding=1,
+            padding_mode='zeros',
             output_padding=0,
         )
         
@@ -771,6 +816,7 @@ class UNet(nn.Module):
             kernel_size=3,
             stride=1,
             padding=1,
+            padding_mode='zeros',
             output_padding=0,
         )
         
@@ -784,6 +830,7 @@ class UNet(nn.Module):
             kernel_size=3,
             stride=1,
             padding=1,
+            padding_mode='zeros',
             output_padding=0,
         )
         
@@ -797,6 +844,7 @@ class UNet(nn.Module):
             kernel_size=3,
             stride=1,
             padding=1,
+            padding_mode='zeros',
             output_padding=0,
         )
         

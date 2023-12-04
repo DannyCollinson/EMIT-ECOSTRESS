@@ -108,20 +108,27 @@ class ToyModel(nn.Module):
 
         x = self.linear_output(x)
         return x.squeeze()
-    
+
+
+
 class LinearModel(nn.Module):
     '''
     Defines a pytorch model that does linear regression
     '''
-    def __init__(self, input_dim: int) -> None:
+    def __init__(
+            self, input_dim: int, radius: int, dropout_rate: float = 0
+    ) -> None:
         super(LinearModel, self).__init__()
         self.linear_output = nn.Linear(
-            in_features=input_dim, out_features=1
+                    in_features=(((2 * radius) + 1)**2) * input_dim,
+                    out_features=1,
         )
+        
+        self.dropout_rate = dropout_rate
 
 
     def forward(self, x: Tensor) -> Tensor:
-        return self.linear_output(x).squeeze()
+        return F.dropout(self.linear_output(x), self.dropout_rate).squeeze()
     
     
     
@@ -141,41 +148,47 @@ class PatchToPixelModel(nn.Module):
             in_features=input_dim * ((2 * radius) + 1)**2, out_features=4096
         )
         
+        self.layernorm1 = nn.LayerNorm(self.linear1.out_features)
+
         self.linear2 = nn.Linear(
             in_features=self.linear1.out_features, out_features=2048
         )
+        
+        self.layernorm2 = nn.LayerNorm(self.linear2.out_features)
         
         self.linear3 = nn.Linear(
             in_features=self.linear2.out_features, out_features=1024
         )
         
+        self.layernorm3 = nn.LayerNorm(self.linear3.out_features)
+
         self.linear4 = nn.Linear(
             in_features=self.linear3.out_features, out_features=1024
         )
-        
+
+        self.layernorm4 = nn.LayerNorm(self.linear4.out_features)
+
         self.linear5 = nn.Linear(
             in_features=self.linear4.out_features, out_features=512
         )
         
+        self.layernorm5 = nn.LayerNorm(self.linear5.out_features)
+
         self.linear6 = nn.Linear(
             in_features=self.linear5.out_features, out_features=256
         )
+
+        self.layernorm6 = nn.LayerNorm(self.linear6.out_features)
 
         # self.linear7 = nn.Linear(
         #     in_features=self.linear6.out_features, out_features=64
         # )
         
+        # self.layernorm7 = nn.LayerNorm(self.linear7.out_features)
+
         self.linear_output = nn.Linear(
             in_features=self.linear6.out_features, out_features=1
         )
-
-        self.layernorm1 = nn.LayerNorm(self.linear1.out_features)
-        self.layernorm2 = nn.LayerNorm(self.linear2.out_features)
-        self.layernorm3 = nn.LayerNorm(self.linear3.out_features)
-        self.layernorm4 = nn.LayerNorm(self.linear4.out_features)
-        self.layernorm5 = nn.LayerNorm(self.linear5.out_features)
-        self.layernorm6 = nn.LayerNorm(self.linear6.out_features)
-        # self.layernorm7 = nn.LayerNorm(self.linear7.out_features)
 
 
     def forward(self, x: Tensor) -> Tensor:
