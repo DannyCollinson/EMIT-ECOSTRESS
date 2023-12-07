@@ -58,17 +58,24 @@ class ToyModel(nn.Module):
     '''
     Defines a pytorch model made up of dense linear layers and ReLU activation
     '''
-    def __init__(self, input_dim: int) -> None:
+    def __init__(
+        self, input_dim: int, radius: int, dropout_rate: float = 0
+    ) -> None:
         super(ToyModel, self).__init__()
-        self.linear1 = nn.Linear(in_features=input_dim, out_features=32)
-
-        self.linear2 = nn.Linear(
-            in_features=self.linear1.out_features, out_features=16
+        self.dropout_rate = dropout_rate
+        
+        self.linear1 = nn.Linear(
+            in_features=(((2 * radius) + 1)**2) * input_dim,
+            out_features=2,
         )
 
-        self.linear3 = nn.Linear(
-            in_features=self.linear2.out_features, out_features=8
-        )
+        # self.linear2 = nn.Linear(
+        #     in_features=self.linear1.out_features, out_features=16
+        # )
+
+        # self.linear3 = nn.Linear(
+        #     in_features=self.linear2.out_features, out_features=8
+        # )
 
         # self.linear4 = nn.Linear(
             # in_features=self.linear3.out_features, out_features=16
@@ -79,12 +86,12 @@ class ToyModel(nn.Module):
         # )
 
         self.linear_output = nn.Linear(
-            in_features=self.linear3.out_features, out_features=1
+            in_features=self.linear1.out_features, out_features=1
         )
         
         self.layernorm1 = nn.LayerNorm(self.linear1.out_features)
-        self.layernorm2 = nn.LayerNorm(self.linear2.out_features)
-        self.layernorm3 = nn.LayerNorm(self.linear3.out_features)
+        # self.layernorm2 = nn.LayerNorm(self.linear2.out_features)
+        # self.layernorm3 = nn.LayerNorm(self.linear3.out_features)
 
         # self.batchnorm1 = nn.BatchNorm1d(num_features=self.linear1.out_features)
         # self.batchnorm2 = nn.BatchNorm1d(num_features=self.linear2.out_features)
@@ -94,17 +101,20 @@ class ToyModel(nn.Module):
 
 
     def forward(self, x: Tensor) -> Tensor:
-        x = self.layernorm1(
-            F.relu(input=self.linear1(x))
+        x = F.dropout(
+            self.layernorm1(
+                F.relu(input=self.linear1(x))
+            ),
+            self.dropout_rate,
         )
         
-        x = self.layernorm2(
-            F.relu(input=self.linear2(x))  # + x[:, :self.linear2.out_features]
-        )
+        # x = self.layernorm2(
+        #     F.relu(input=self.linear2(x))  # + x[:, :self.linear2.out_features]
+        # )
 
-        x = self.layernorm3(
-            F.relu(input=self.linear3(x))  # + x[:, :self.linear3.out_features]
-        )
+        # x = self.layernorm3(
+        #     F.relu(input=self.linear3(x))  # + x[:, :self.linear3.out_features]
+        # )
 
         x = self.linear_output(x)
         return x.squeeze()
