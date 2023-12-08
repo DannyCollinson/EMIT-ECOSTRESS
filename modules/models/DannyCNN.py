@@ -905,3 +905,164 @@ class UNet(nn.Module):
             out = out.reshape(out.shape[0], self.y_size, self.x_size)
         
         return out
+    
+
+
+class PaperCNN(nn.Module):
+    def __init__(
+            self, y_size: int,
+            x_size: int,
+            input_dim: int,
+            dropout_rate: float = 0.0
+    ) -> None:
+        super(PaperCNN, self).__init__()
+        self.y_size = y_size
+        self.x_size = x_size
+        self.input_dim = input_dim
+        self.dropout_rate = dropout_rate
+        
+        self.down1 = nn.Conv3d(
+            in_channels=input_dim,
+            out_channels=16,
+            kernel_size=3,
+            stride=1,
+            padding=1,
+            padding_mode='zeros',
+        )
+        
+        # self.maxpool1 = nn.MaxPool2d(
+        #     kernel_size=2, return_indices=True,
+        # )
+        
+        self.down2 = nn.Conv3d(
+            in_channels=16,
+            out_channels=16,
+            kernel_size=3,
+            stride=1,
+            padding=1,
+            padding_mode='zeros',
+        )
+        
+        # self.maxpool2 = nn.MaxPool2d(
+        #     kernel_size=2, return_indices=True,
+        # )
+        
+        self.down3 = nn.Conv3d(
+            in_channels=16,
+            out_channels=16,
+            kernel_size=3,
+            stride=1,
+            padding=1,
+            padding_mode='zeros',
+        )
+        
+        # self.maxpool3 = nn.MaxPool2d(
+        #     kernel_size=2, return_indices=True,
+        # )
+        
+        self.down4 = nn.Conv3d(
+            in_channels=16,
+            out_channels=32,
+            kernel_size=3,
+            stride=1,
+            padding=1,
+            padding_mode='zeros',
+        )
+        
+        # self.maxpool4 = nn.MaxPool2d(
+        #     kernel_size=2, return_indices=True,
+        # )
+        
+        self.down5 = nn.Conv3d(
+            in_channels=32,
+            out_channels=32,
+            kernel_size=3,
+            stride=1,
+            padding=1,
+            padding_mode='zeros',
+        )
+        
+        self.down6 = nn.Conv3d(
+            in_channels=32,
+            out_channels=64,
+            kernel_size=3,
+            stride=1,
+            padding=1,
+            padding_mode='zeros',
+        )
+        
+        self.down7 = nn.Conv3d(
+            in_channels=64,
+            out_channels=64,
+            kernel_size=3,
+            stride=1,
+            padding=1,
+            padding_mode='zeros',
+        )
+        
+        self.maxpool = nn.MaxPool3d(
+            kernel_size=3,
+            stride=1,
+            padding=1,
+        )
+        
+        self.linear_out1 = nn.Linear(
+            in_features=y_size * x_size * 4,
+            out_features=200,
+        )
+        
+        self.linear_out2 = nn.Linear(
+            in_features=self.linear_out1.out_features,
+            out_features=16,
+        )
+        
+    
+    def forward(self, x: Tensor) -> Tensor:
+        if len(x.shape) == 3:
+            x = x.permute(2, 0, 1)
+            concat_axis = 0
+        else:
+            x = x.permute(0, 3, 1, 2)
+            concat_axis = 1
+                    
+        down1 = F.dropout(F.relu(self.down1(x)), self.dropout_rate)
+        # down2, down2_ind = self.maxpool1(down1)
+        down2 = F.dropout(F.relu(self.down2(down1)), self.dropout_rate)
+        # down3, down3_ind = self.maxpool2(down2)
+        down3 = F.dropout(F.relu(self.down3(down2)), self.dropout_rate)
+        # down4, down4_ind = self.maxpool3(down3)
+        down4 = F.dropout(F.relu(self.down4(down3)), self.dropout_rate)
+        # down5, down5_ind = self.maxpool4(down4)
+        down5 = F.dropout(F.relu(self.down5(down4)), self.dropout_rate)
+        down6 = F.dropout(F.relu(self.down5(down5)), self.dropout_rate)
+        down7 = F.dropout(F.relu(self.down5(down6)), self.dropout_rate)
+        pool = self.maxpool(down7)
+
+        # up5 = F.dropout(F.relu(self.up5(down5)), self.dropout_rate)
+        # up4 = self.maxunpool5(up5, down5_ind)
+        # up4 = torch.cat([up4, down4], axis=concat_axis)
+        # up4 = F.dropout(F.relu(self.up4(up4)), self.dropout_rate)
+        # up3 = self.maxunpool4(up4, down4_ind)
+        # up3 = torch.cat([up3, down3], axis=concat_axis)
+        # up3 = F.dropout(F.relu(self.up3(up3)), self.dropout_rate)
+        # up2 = self.maxunpool3(up3, down3_ind)
+        # up2 = torch.cat([up2, down2], axis=concat_axis)
+        # up2 = F.dropout(F.relu(self.up2(up2)), self.dropout_rate)
+        # up1 = self.maxunpool2(up2, down2_ind)
+        # up1 = torch.cat([up1, down1], axis=concat_axis)
+        # up1 = F.dropout(F.relu(self.up1(up1)), self.dropout_rate)
+        
+        # if len(up1.shape) == 3:
+        #     out = up1.flatten()
+        # else:
+        #     out = up1.reshape(up1.shape[0], len(up1.flatten()) // up1.shape[0])
+        
+        out = F.relu(self.linear_out1(pool))
+        out = self.linear_out2(out)
+
+        if len(out.shape) == 1:
+            out = out.reshape(self.y_size, self.x_size)
+        else:
+            out = out.reshape(out.shape[0], self.y_size, self.x_size)
+        
+        return out

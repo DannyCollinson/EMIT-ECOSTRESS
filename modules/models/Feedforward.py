@@ -7,9 +7,14 @@ class SimpleFeedforwardModel(nn.Module):
     '''
     Defines a pytorch model made up of dense linear layers and ReLU activation
     '''
-    def __init__(self, input_dim: int) -> None:
+    def __init__(
+            self, input_dim: int, radius: int, dropout_rate: float
+        ) -> None:
         super(SimpleFeedforwardModel, self).__init__()
-        self.linear1 = nn.Linear(in_features=input_dim, out_features=512)
+        self.linear1 = nn.Linear(
+            in_features=(((2 * radius) + 1)**2) * input_dim,
+            out_features=512
+        )
         
         self.linear2 = nn.Linear(
             in_features=self.linear1.out_features, out_features=256
@@ -44,12 +49,12 @@ class SimpleFeedforwardModel(nn.Module):
 
 
     def forward(self, x: Tensor) -> Tensor:
-        x = self.layernorm1(F.relu(input=self.linear1(x)))
-        x = self.layernorm2(F.relu(input=self.linear2(x)))
-        x = self.layernorm3(F.relu(input=self.linear3(x)))
-        x = self.layernorm4(F.relu(input=self.linear4(x)))
-        x = self.layernorm5(F.relu(input=self.linear5(x)))
-        x = self.layernorm6(F.relu(input=self.linear6(x)))
+        x = F.dropout(self.layernorm1(F.relu(input=self.linear1(x))))
+        x = F.dropout(self.layernorm2(F.relu(input=self.linear2(x))))
+        x = F.dropout(self.layernorm3(F.relu(input=self.linear3(x))))
+        x = F.dropout(self.layernorm4(F.relu(input=self.linear4(x))))
+        x = F.dropout(self.layernorm5(F.relu(input=self.linear5(x))))
+        x = F.dropout(self.layernorm6(F.relu(input=self.linear6(x))))
         x = self.linear_output(x)
         return x.squeeze()
 
@@ -66,7 +71,7 @@ class ToyModel(nn.Module):
         
         self.linear1 = nn.Linear(
             in_features=(((2 * radius) + 1)**2) * input_dim,
-            out_features=2,
+            out_features=1,
         )
 
         # self.linear2 = nn.Linear(
