@@ -26,7 +26,7 @@ class AutoEncoderWrapper:
 
     def create_trainer(self) -> pl.Trainer:
         trainer = pl.Trainer(
-            max_epochs=2,
+            max_epochs=25,
             num_sanity_val_steps=0,
             # logger=None,
             # check_val_every_n_epoch=1,
@@ -118,32 +118,25 @@ class AutoEncoder(pl.LightningModule):
         self.val_losses = []
 
     def configure_optimizers(self):
-        # return torch.optim.Adam(self.parameters(), lr=0.001)
-        optimizer = torch.optim.Adam(self.parameters(), lr=0.001)
-        self.optimizer = optimizer
-        scheduler = {
-            'scheduler': ReduceLROnPlateau(
-                self.optimizer,
-                mode='min',
-                factor=0.5,
-                patience=2,
-                verbose=True,
-            ),
-            'monitor': 'train_loss',
-            'interval': 'epoch',
-            'frequency': 1,
-            'strict': True,
-        }
-        return [optimizer], [scheduler]
+        return torch.optim.Adam(self.parameters(), lr=0.001)
+        # optimizer = torch.optim.Adam(self.parameters(), lr=0.001)
+        # scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=5)
+        # return {
+        #     'optimizer': optimizer,
+        #     'lr_scheduler': {
+        #         'scheduler': scheduler,
+        #         'monitor': 'val_loss'  # Make sure this metric is logged in validation_step
+        #     }
+        # }
 
-    def plotLosses(self):
+    def plotLosses(self, en_dim):
         save_dir = '/Users/gabriellatwombly/Desktop/CS 101/EMIT-ECOSTRESS/loss plots/'
 
         os.makedirs(save_dir, exist_ok=True)
 
         current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
-        file_name = f"loss_plot_{current_time}.png"
+        file_name = f"updated_loss_plot_dim_{en_dim}_{current_time}.png"
 
         save_path = os.path.join(save_dir, file_name)
 
