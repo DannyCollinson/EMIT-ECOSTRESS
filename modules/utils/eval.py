@@ -54,7 +54,7 @@ def plot_loss_patch_to_pixel(
     plt.show(fig)
     
     
-def plot_loss_CNN(
+def plot_loss_cnn(
         train_loss: np.ndarray,
         val_loss: np.ndarray,
         x_size: int,
@@ -103,7 +103,7 @@ def plot_loss_CNN(
     plt.show(fig)
 
 
-def plot_loss_on_map(
+def plot_loss_on_map_patch_to_pixel(
         train_loss_array: np.ndarray,
         val_loss_array: np.ndarray,
         radius: int,
@@ -135,6 +135,43 @@ def plot_loss_on_map(
     plt.colorbar(fraction=0.05, shrink=0.8)
     ax.matshow(val_loss_array)
     plt.show(fig)
+    
+    
+def plot_loss_on_map_cnn(
+        train_loss_array: np.ndarray,
+        val_loss_array: np.ndarray,
+        x_size: int,
+        y_size: int,
+        n_dimensions: int,
+) -> None:  # displays plot
+    '''
+    Plots the training and validation loss per pixel on the map
+    to visualize the distribution
+    
+    Input
+    train_loss_array: numpy array of average training RMSE per pixel
+    val_loss_array: numpy array of average validation RMSE per pixel
+    radius: the radius used for the model
+    n_dimensions: the number of non-elevation dimensions of the model input
+    '''
+    fig, ax = plt.subplots()
+    ax.set_title(
+        f'Train RMSE on Map, x_size,y_size={x_size},{y_size}, '
+        f'N-dimensions={n_dimensions}'
+    )
+    plt.imshow(train_loss_array)
+    plt.colorbar(fraction=0.05, shrink=0.6)
+    ax.matshow(train_loss_array)
+    plt.show(fig)
+    fig, ax = plt.subplots()
+    ax.set_title(
+        f'Validation RMSE on Map, x,y={x_size},{y_size}, '
+        f'N-dimensions={n_dimensions}'
+    )
+    plt.imshow(train_loss_array)
+    plt.colorbar(fraction=0.05, shrink=0.8)
+    ax.matshow(val_loss_array)
+    plt.show(fig)
 
 
 def initialize_eval_results() -> pd.DataFrame:
@@ -144,7 +181,7 @@ def initialize_eval_results() -> pd.DataFrame:
     return pd.DataFrame(
         columns=[
             'radius',
-            'n_components',
+            'n_dimensions',
             
             'train_avg_std',
             'train_std_std',

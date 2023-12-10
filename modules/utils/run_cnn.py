@@ -13,17 +13,18 @@ from torch.utils.data import DataLoader
 
 from utils.pickling import join_path, pickle_save, pickle_load
 import datasets.Datasets
-import models.PatchToPixel
+import models.DannyCNN
 import utils.train
 import utils.eval
 
 
-def train_patch_to_pixel(
+def train_cnn(
     project_path: str,
     base_data_path: str,
     input_type: str,
     n_dimensions: int,
-    radius: int,
+    x_size: int,
+    y_size: int,
     model_type: str,
     train_batch_size: int = 256,
     val_batch_size: int = 1024,
@@ -32,7 +33,7 @@ def train_patch_to_pixel(
     learning_rate: float = 0.001,
 ) -> tuple[np.ndarray, np.ndarray, pd.DataFrame, np.ndarray, np.ndarray]:
     '''
-    Runs the full training pipeline for a patch-to-pixel model
+    Runs the full training pipeline for a CNN model
     '''
 
     if torch.cuda.is_available():
@@ -98,26 +99,26 @@ def train_patch_to_pixel(
     
     # create datasets and dataloaders
 
-    train_dataset = datasets.Datasets.PatchToPixelDataset(
+    train_dataset = datasets.Datasets.CNNDataset(
         emit_data=emit_train,
         omit_components=omit_components,
         ecostress_data=eco_train,
         ecostress_center=None,
         ecostress_scale=None,
         additional_data=(elev_train,),
-        radius=radius,
-        boundary_width=radius,
+        y_size=y_size,
+        x_size=x_size,
     )
 
-    val_dataset = datasets.Datasets.PatchToPixelDataset(
+    val_dataset = datasets.Datasets.CNNDataset(
         emit_data=emit_val,
         omit_components=omit_components,
         ecostress_data=eco_val,
         ecostress_center=None,
         ecostress_scale=None,
         additional_data=(elev_val,),
-        radius=radius,
-        boundary_width=radius,
+        y_size=y_size,
+        x_size=x_size,
     )
 
     if train_batch_size is not None:
@@ -140,45 +141,25 @@ def train_patch_to_pixel(
         val_loader = DataLoader(
             dataset=val_dataset, batch_size=None, shuffle=False,
         )
-    
-    
+
+
     # define model and other training configurations
 
-    if model_type == 'linear':
-        model = models.PatchToPixel.LinearModel(
+    if model_type == 'U-Net':
+        model = models.DannyCNN.UNet(
+            y_size=y_size,
+            x_size=x_size,
             input_dim=train_dataset.input_dim,
-            radius=radius,
             dropout_rate=dropout_rate,
         )
-    elif model_type == 'mini':
-        model = models.PatchToPixel.MiniDenseNN(
+    elif model_type == 'SS':
+        model = models.DannyCNN.SemanticSegmenter(
+            y_size=y_size,
+            x_size=x_size,
             input_dim=train_dataset.input_dim,
-            radius=radius,
             dropout_rate=dropout_rate,
         )
-    elif model_type == 'small':
-        model = models.PatchToPixel.SmallDenseNN(
-            input_dim=train_dataset.input_dim,
-            radius=radius,
-            dropout_rate=dropout_rate,
-        )
-    elif model_type == 'large':
-        model = models.PatchToPixel.LargeDenseNN(
-            input_dim=train_dataset.input_dim,
-            radius=radius,
-            dropout_rate=dropout_rate,
-        )
-    elif model_type == 'attention':
-        model = models.PatchToPixel.SelfAttentionModel(
-            input_dim=train_dataset.input_dim,
-            radius=radius,
-            dropout_rate=dropout_rate,
-        )
-    elif model_type == 'transformer':
-        raise NotImplementedError(
-            'Transformer training has not yet been implemented in this notebook'
-        )
-    
+
     model = model.to(torch.device(device))
 
     optimizer = optim.Adam(
@@ -191,7 +172,10 @@ def train_patch_to_pixel(
 
     loss_fn = nn.MSELoss(reduction='sum')
 
-    print(f'radius={radius}, n_dimensions={n_dimensions}\n{model}')
+    print(
+        f'x_size={x_size}, y_size={y_size}, '
+        f'n_dimensions={n_dimensions}\n{model}'
+    )
     
     
     # run training!
@@ -232,27 +216,36 @@ def train_patch_to_pixel(
     if eval_stats is not None:
         eval_stats = np.concatenate(
             [
-                np.array((radius, n_dimensions))[:, np.newaxis],
+                np.array((y_size, x_size, n_dimensions))[:, np.newaxis],
                 eval_stats[:, np.newaxis],
             ],
             axis=0,
         )
         
         stats_columns = utils.eval.initialize_eval_results().columns.to_list()
+        stats_columns.extend(['y_size', 'x_size'])
+        stats_columns.remove('radius')
         stats = pd.DataFrame({column: stat for column, stat in zip(stats_columns, eval_stats)})
-        stats['radius'] = stats['radius'].astype(int)
+        stats['y_size'] = stats['y_size'].astype(int)
+        stats['x_size'] = stats['x_size'].astype(int)
         stats['n_dimensions'] = stats['n_dimensions'].astype(int)
     else:
         stats = None
     
     # print(stats)
     
-    utils.eval.plot_loss_patch_to_pixel(
-        train_loss, val_loss, radius, n_dimensions, model_type, input_type
+    utils.eval.plot_loss_cnn(
+        train_loss,
+        val_loss,
+        x_size,
+        y_size,
+        n_dimensions,
+        model_type,
+        input_type,
     )
     
-    utils.eval.plot_loss_on_map_patch_to_pixel(
-        train_loss_array, val_loss_array, radius, n_dimensions
+    utils.eval.plot_loss_on_map_cnn(
+        train_loss_array, val_loss_array, x_size, y_size, n_dimensions
     )
 
     return train_loss, val_loss, stats, train_loss_array, val_loss_array

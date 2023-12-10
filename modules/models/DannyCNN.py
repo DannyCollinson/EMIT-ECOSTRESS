@@ -176,7 +176,7 @@ class UNet(nn.Module):
         self.input_dim = input_dim
         self.dropout_rate = dropout_rate
         
-        self.down1 = nn.Conv3d(
+        self.down1 = nn.Conv2d(
             in_channels=input_dim,
             out_channels=16,
             kernel_size=3,
@@ -185,11 +185,11 @@ class UNet(nn.Module):
             padding_mode='zeros',
         )
         
-        self.maxpool1 = nn.MaxPool3d(
+        self.maxpool1 = nn.MaxPool2d(
             kernel_size=2, return_indices=True,
         )
         
-        self.down2 = nn.Conv3d(
+        self.down2 = nn.Conv2d(
             in_channels=16,
             out_channels=16,
             kernel_size=3,
@@ -198,11 +198,11 @@ class UNet(nn.Module):
             padding_mode='zeros',
         )
         
-        self.maxpool2 = nn.MaxPool3d(
+        self.maxpool2 = nn.MaxPool2d(
             kernel_size=2, return_indices=True,
         )
         
-        self.down3 = nn.Conv3d(
+        self.down3 = nn.Conv2d(
             in_channels=16,
             out_channels=32,
             kernel_size=3,
@@ -211,11 +211,11 @@ class UNet(nn.Module):
             padding_mode='zeros',
         )
         
-        self.maxpool3 = nn.MaxPool3d(
+        self.maxpool3 = nn.MaxPool2d(
             kernel_size=2, return_indices=True,
         )
         
-        self.down4 = nn.Conv3d(
+        self.down4 = nn.Conv2d(
             in_channels=32,
             out_channels=32,
             kernel_size=3,
@@ -224,11 +224,11 @@ class UNet(nn.Module):
             padding_mode='zeros',
         )
         
-        self.maxpool4 = nn.MaxPool3d(
+        self.maxpool4 = nn.MaxPool2d(
             kernel_size=2, return_indices=True,
         )
         
-        self.down5 = nn.Conv3d(
+        self.down5 = nn.Conv2d(
             in_channels=32,
             out_channels=64,
             kernel_size=3,
@@ -237,7 +237,7 @@ class UNet(nn.Module):
             padding_mode='zeros',
         )
         
-        self.up5 = nn.ConvTranspose3d(
+        self.up5 = nn.ConvTranspose2d(
             in_channels=64,
             out_channels=32,
             kernel_size=3,
@@ -247,11 +247,11 @@ class UNet(nn.Module):
             output_padding=0,
         )
         
-        self.maxunpool5 = nn.MaxUnpool3d(
+        self.maxunpool5 = nn.MaxUnpool2d(
             kernel_size=2,
         )
         
-        self.up4 = nn.ConvTranspose3d(
+        self.up4 = nn.ConvTranspose2d(
             in_channels=32 + self.down4.out_channels,
             out_channels=32,
             kernel_size=3,
@@ -261,11 +261,11 @@ class UNet(nn.Module):
             output_padding=0,
         )
         
-        self.maxunpool4 = nn.MaxUnpool3d(
+        self.maxunpool4 = nn.MaxUnpool2d(
             kernel_size=2,
         )
         
-        self.up3 = nn.ConvTranspose3d(
+        self.up3 = nn.ConvTranspose2d(
             in_channels=32 + self.down3.out_channels,
             out_channels=16,
             kernel_size=3,
@@ -275,11 +275,11 @@ class UNet(nn.Module):
             output_padding=0,
         )
         
-        self.maxunpool3 = nn.MaxUnpool3d(
+        self.maxunpool3 = nn.MaxUnpool2d(
             kernel_size=2,
         )
 
-        self.up2 = nn.ConvTranspose3d(
+        self.up2 = nn.ConvTranspose2d(
             in_channels=16 + self.down2.out_channels,
             out_channels=16,
             kernel_size=3,
@@ -289,13 +289,13 @@ class UNet(nn.Module):
             output_padding=0,
         )
         
-        self.maxunpool2 = nn.MaxUnpool3d(
+        self.maxunpool2 = nn.MaxUnpool2d(
             kernel_size=2,
         )
         
-        self.up1 = nn.ConvTranspose3d(
+        self.up1 = nn.ConvTranspose2d(
             in_channels=16 + self.down1.out_channels,
-            out_channels=4,
+            out_channels=1,
             kernel_size=3,
             stride=1,
             padding=1,
@@ -304,7 +304,7 @@ class UNet(nn.Module):
         )
         
         self.linear_out1 = nn.Linear(
-            in_features=y_size * x_size * 4,
+            in_features=y_size * x_size,
             out_features=y_size * x_size,
         )
         

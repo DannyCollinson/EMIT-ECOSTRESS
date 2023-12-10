@@ -266,6 +266,8 @@ class CNNDataset(Dataset):
         self.ecostress_data = tensor(self.ecostress_data)
         for i, additional_data_element in enumerate(self.additional_data):
             self.additional_data[i] = tensor(additional_data_element)
+        
+        self.boundary_width = 0  # for compatability reasons
 
 
     def __len__(self) -> int:

@@ -9,6 +9,7 @@ from torch.nn.functional import mse_loss
 from torch.utils.data import DataLoader
 
 import utils.eval
+import datasets.Datasets
 
 
 def train(
@@ -28,7 +29,8 @@ def train(
     start_epoch = 0
     
     train_std = train_loader.dataset.ecostress_scale
-    val_std = val_loader.dataset.ecostress_scale
+    if val_loader is not None:
+        val_std = val_loader.dataset.ecostress_scale
 
     if preexisting_losses is not None:
         start_epoch = len(preexisting_losses[0])
@@ -51,7 +53,9 @@ def train(
                 if epoch > 0 or start_epoch != 0:
                     loss.backward()
                     optimizer.step()
-                train_loss[epoch] += (loss.item() / len(train_loader.dataset))
+                train_loss[epoch] += (
+                    loss.item() / train_loader.dataset.ecostress_data.size
+                )
                 if epoch == start_epoch + n_epochs:
                     train_loss_eval_list.append(
                         mse_loss(
@@ -69,9 +73,10 @@ def train(
                         x = x.to(dtype=torch.float, device=device)
                         y = y.to(dtype=torch.float, device=device)
                         x = model(x)
+                        
                         val_loss[epoch] += (
                             loss_fn(x, y.squeeze()).item() / 
-                            len(val_loader.dataset)
+                            val_loader.dataset.ecostress_data.size
                         )
                         if epoch == start_epoch + n_epochs:
                             val_loss_eval_list.append(
