@@ -22,7 +22,6 @@ def train(
     loss_interval: Union[int, None] = 5,
     preexisting_losses: Union[list[np.ndarray, np.ndarray], None] = None,
     device: str = 'cpu',
-    log_file_path: str = None,
 ) -> tuple[np.ndarray[np.float64, Any], np.ndarray[np.float64, Any]]:
     begin = time.time()
     t = begin
@@ -128,45 +127,12 @@ def train(
                 else:
                     print('', end='')
                 print(f'Time: {time.time() - t:3.3}')
-                if log_file_path is not None:
-                    t = time.time()
-                
-                if log_file_path is not None:
-                    print_epoch = ("0" * (3 - len(str(epoch + start_epoch))) + 
-                                str(epoch + start_epoch)
-                    )
-                    print(
-                        f'Epoch {print_epoch}:    ',
-                        'Train (RMSE, K):  '
-                        f'{train_loss[epoch]:6.5}, ',
-                        f'{train_std * train_loss[epoch]:6.5}   \t',
-                        'Val (RMSE, K):  '
-                        f'{val_loss[epoch]:6.5}, ',
-                        f'{val_std * val_loss[epoch]:6.5}   \t',
-                        end='',
-                        file=open(log_file_path, 'a'),
-                    )
-                    if scheduler is not None:
-                        print(
-                            f'LR: {optimizer.param_groups[0]["lr"]:6.5}\t',
-                            end='',
-                            file=open(log_file_path, 'a'),
-                        )
-                    else:
-                        print('', end='', file=open(log_file_path, 'a'))
-                    print(
-                        f'Time: {time.time() - t:3.3}',
-                        file=open(log_file_path, 'a')
-                    )
-                    t = time.time()
             
-            # if (epoch > 0 or start_epoch != 0) and scheduler is not None:
             if scheduler is not None:
                 scheduler.step(val_loss[epoch])
                 
     except KeyboardInterrupt:
         print('\nTraining interrupted by user')
-        print('\nTraining interrupted by user', file=open(log_file_path, 'a'))
         train_loss = train_loss[:current_epoch]
         val_loss = val_loss[:current_epoch]
         eval_stats = None

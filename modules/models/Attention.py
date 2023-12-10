@@ -1,21 +1,19 @@
 import torch.nn as nn
 import torch.nn.functional as F
-from torch import Tensor
+from torch import Tensor, concatenate, zeros
 
 
-class TransformerModel(nn.Module):
+class SelfAttentionModel(nn.Module):
     '''
     Defines a pytorch model using self-attention on the spectra
     '''
     def __init__(self, input_dim: int) -> None:
-        super(TransformerModel, self).__init__()
+        super(SelfAttentionModel, self).__init__()
         
-        self.tranformer = nn.Transformer(
-            8, 4, 2, 2, 128, batch_first=True, norm_first=True
-        )
+        self.attention = nn.MultiheadAttention(256, 16, batch_first=True)
 
         self.linear1 = nn.Linear(
-            in_features=128, out_features=64
+            in_features=256, out_features=64
         )
         
         self.linear2 = nn.Linear(
@@ -25,10 +23,6 @@ class TransformerModel(nn.Module):
         self.linear3 = nn.Linear(
             in_features=self.linear2.out_features, out_features=16
         )
-        
-        # self.linear4 = nn.Linear(
-            # in_features=self.linear3.out_features, out_features=16
-        # )
         
         self.linear_output = nn.Linear(
             in_features=self.linear3.out_features, out_features=1
@@ -40,7 +34,11 @@ class TransformerModel(nn.Module):
 
 
     def forward(self, x: Tensor) -> Tensor:
-        x, _ = self.tranformer(x, x, x)
+        if x.shape[2] < 256:
+            x = concatenate(
+                [x, zeros((x.shape[0], x.shape[1], 256-x.shape[2]))], dim=-1
+            )
+        x, _ = self.attention(x, x, x)
         x = self.layernorm1(F.relu(input=self.linear1(x)))
         x = self.layernorm2(F.relu(input=self.linear2(x)))
         x = self.layernorm3(F.relu(input=self.linear3(x)))

@@ -1,6 +1,46 @@
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 from torch import Size
+
+
+def plot_loss_patch_to_pixel(
+        train_loss: np.ndarray,
+        val_loss: np.ndarray,
+        radius: int,
+        n_dimensions: int,
+        model_name: str,
+        input_type: str,
+) -> None:  # displays plot
+    fig, ax = plt.subplots()
+    fig.suptitle(
+        f'{model_name}, radius={radius}'
+    )
+    l = 2 * radius + 1
+    ax.set_title(
+        f'Input = {l}x{l}x{n_dimensions}, '
+        f'{input_type} + elevation'
+    )
+    ax.semilogy(
+        np.arange(len(train_loss)),
+        train_loss,
+        label=(
+            'train, '
+            f'min std={min(train_loss):.4}, '
+        ),
+    )
+    ax.semilogy(
+        np.arange(len(val_loss)),
+        val_loss,
+        label=(
+            'val, '
+            f'min std={min(val_loss):.4}, '
+        ),
+    )
+    ax.set_xlabel('Epoch')
+    ax.set_ylabel('Average RMSE Loss')
+    ax.legend()
+    plt.show(fig)
 
 
 def initialize_eval_results() -> pd.DataFrame:
