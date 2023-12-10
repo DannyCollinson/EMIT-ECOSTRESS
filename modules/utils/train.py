@@ -9,6 +9,7 @@ from torch.nn.functional import mse_loss
 from torch.utils.data import DataLoader
 
 import utils.eval
+import datasets.Datasets
 
 
 def train(
@@ -22,14 +23,14 @@ def train(
     loss_interval: Union[int, None] = 5,
     preexisting_losses: Union[list[np.ndarray, np.ndarray], None] = None,
     device: str = 'cpu',
-    log_file_path: str = None,
 ) -> tuple[np.ndarray[np.float64, Any], np.ndarray[np.float64, Any]]:
     begin = time.time()
     t = begin
     start_epoch = 0
     
     train_std = train_loader.dataset.ecostress_scale
-    val_std = val_loader.dataset.ecostress_scale
+    if val_loader is not None:
+        val_std = val_loader.dataset.ecostress_scale
 
     if preexisting_losses is not None:
         start_epoch = len(preexisting_losses[0])
@@ -52,7 +53,11 @@ def train(
                 if epoch > 0 or start_epoch != 0:
                     loss.backward()
                     optimizer.step()
-                train_loss[epoch] += (loss.item() / len(train_loader.dataset))
+                train_loss[epoch] += (
+                    loss.item() / (
+                        train_loader.dataset.ecostress_data.detach().numpy().size
+                    )
+                )
                 if epoch == start_epoch + n_epochs:
                     train_loss_eval_list.append(
                         mse_loss(
@@ -70,9 +75,11 @@ def train(
                         x = x.to(dtype=torch.float, device=device)
                         y = y.to(dtype=torch.float, device=device)
                         x = model(x)
+                        
                         val_loss[epoch] += (
-                            loss_fn(x, y.squeeze()).item() / 
-                            len(val_loader.dataset)
+                            loss_fn(x, y.squeeze()).item() / (
+                                val_loader.dataset.ecostress_data.detach().numpy().size
+                            )
                         )
                         if epoch == start_epoch + n_epochs:
                             val_loss_eval_list.append(
@@ -128,45 +135,12 @@ def train(
                 else:
                     print('', end='')
                 print(f'Time: {time.time() - t:3.3}')
-                if log_file_path is not None:
-                    t = time.time()
-                
-                if log_file_path is not None:
-                    print_epoch = ("0" * (3 - len(str(epoch + start_epoch))) + 
-                                str(epoch + start_epoch)
-                    )
-                    print(
-                        f'Epoch {print_epoch}:    ',
-                        'Train (RMSE, K):  '
-                        f'{train_loss[epoch]:6.5}, ',
-                        f'{train_std * train_loss[epoch]:6.5}   \t',
-                        'Val (RMSE, K):  '
-                        f'{val_loss[epoch]:6.5}, ',
-                        f'{val_std * val_loss[epoch]:6.5}   \t',
-                        end='',
-                        file=open(log_file_path, 'a'),
-                    )
-                    if scheduler is not None:
-                        print(
-                            f'LR: {optimizer.param_groups[0]["lr"]:6.5}\t',
-                            end='',
-                            file=open(log_file_path, 'a'),
-                        )
-                    else:
-                        print('', end='', file=open(log_file_path, 'a'))
-                    print(
-                        f'Time: {time.time() - t:3.3}',
-                        file=open(log_file_path, 'a')
-                    )
-                    t = time.time()
             
-            # if (epoch > 0 or start_epoch != 0) and scheduler is not None:
             if scheduler is not None:
                 scheduler.step(val_loss[epoch])
                 
     except KeyboardInterrupt:
         print('\nTraining interrupted by user')
-        print('\nTraining interrupted by user', file=open(log_file_path, 'a'))
         train_loss = train_loss[:current_epoch]
         val_loss = val_loss[:current_epoch]
         eval_stats = None

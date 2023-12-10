@@ -1,6 +1,233 @@
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 from torch import Size
+
+
+import time
+from typing import Union, Any
+
+import numpy as np
+import pandas as pd
+
+import torch
+from torch.nn.functional import mse_loss
+from torch.utils.data import DataLoader
+
+import utils.eval
+import datasets.Datasets
+
+
+def train_loss_map(
+    model,
+    loader: Union[DataLoader, None] = None,
+    device: str = 'cpu',
+) -> tuple[np.ndarray[np.float64, Any], np.ndarray[np.float64, Any]]:
+    model.eval()
+    with torch.no_grad():
+        loss_eval_list = []
+        for x, y in loader:
+            x = x.to(dtype=torch.float, device=device)
+            y = y.to(dtype=torch.float, device=device)
+            x = model(x)
+            loss_eval_list.append(
+                mse_loss(
+                    x, y.squeeze(), reduction='none'
+                ).cpu().detach().numpy()
+            )
+        
+        _, eval_losses, _ = (
+            utils.eval.evaluate_model_performance(
+                (
+                    np.array(
+                        loader.dataset.ecostress_data.shape
+                    ) -
+                    2 * loader.dataset.boundary_width
+                ),
+                loader.dataset.ecostress_scale,
+                (
+                    np.array(
+                        loader.dataset.ecostress_data.shape
+                    ) -
+                    2 * loader.dataset.boundary_width
+                ),
+                loader.dataset.ecostress_scale,
+                loss_eval_list,
+                loss_eval_list,
+            )
+        )
+
+    return eval_losses
+
+
+def plot_loss_patch_to_pixel(
+        train_loss: np.ndarray,
+        val_loss: np.ndarray,
+        radius: int,
+        n_dimensions: int,
+        model_name: str,
+        input_type: str,
+) -> None:  # displays plot
+    '''
+    Plots the train and validation curves for a given model. Returns None
+    
+    Input
+    train_loss: 1-D numpy array of training loss values for each epoch
+    val_loss: 1-D numpy array of validation loss values for each epoch
+    radius: the radius used for the patch-to-pixel model
+    n_dimensions: the number of non-elevation dimensions in the model input
+    model_name: the type of model used, e.g. "Small Dense Network"
+    input_type: the type of input, e.g. "PCA"
+    '''
+    fig, ax = plt.subplots()
+    fig.suptitle(
+        f'{model_name}, radius={radius}'
+    )
+    l = 2 * radius + 1
+    ax.set_title(
+        f'Input = {l}x{l}x{n_dimensions}, '
+        f'{input_type} + elevation'
+    )
+    ax.semilogy(
+        np.arange(len(train_loss)),
+        train_loss,
+        label=(
+            'train, '
+            f'min std={min(train_loss):.4}, '
+        ),
+    )
+    ax.semilogy(
+        np.arange(len(val_loss)),
+        val_loss,
+        label=(
+            'val, '
+            f'min std={min(val_loss):.4}, '
+        ),
+    )
+    ax.set_xlabel('Epoch')
+    ax.set_ylabel('Average RMSE Loss')
+    ax.legend()
+    plt.show(fig)
+    
+    
+def plot_loss_cnn(
+        train_loss: np.ndarray,
+        val_loss: np.ndarray,
+        x_size: int,
+        y_size: int,
+        n_dimensions: int,
+        model_name: str,
+        input_type: str,
+) -> None:  # displays plot
+    '''
+    Plots the train and validation curves for a given model. Returns None
+    
+    Input
+    train_loss: 1-D numpy array of training loss values for each epoch
+    val_loss: 1-D numpy array of validation loss values for each epoch
+    x_size: the x_size used for the CNN model
+    y_size: the y_size used for the CNN model
+    n_dimensions: the number of non-elevation dimensions in the model input
+    model_name: the type of model used, e.g. "U-Net"
+    input_type: the type of input, e.g. "PCA"
+    '''
+    fig, ax = plt.subplots()
+    fig.suptitle(f'{model_name}')
+    ax.set_title(
+        f'Input = {x_size}x{y_size}x{n_dimensions}, '
+        f'{input_type} + elevation'
+    )
+    ax.semilogy(
+        np.arange(len(train_loss)),
+        train_loss,
+        label=(
+            'train, '
+            f'min std={min(train_loss):.4}, '
+        ),
+    )
+    ax.semilogy(
+        np.arange(len(val_loss)),
+        val_loss,
+        label=(
+            'val, '
+            f'min std={min(val_loss):.4}, '
+        ),
+    )
+    ax.set_xlabel('Epoch')
+    ax.set_ylabel('Average RMSE Loss')
+    ax.legend()
+    plt.show(fig)
+
+
+def plot_loss_on_map_patch_to_pixel(
+        train_loss_array: np.ndarray,
+        val_loss_array: np.ndarray,
+        radius: int,
+        n_dimensions: int,
+) -> None:  # displays plot
+    '''
+    Plots the training and validation loss per pixel on the map
+    to visualize the distribution
+    
+    Input
+    train_loss_array: numpy array of average training RMSE per pixel
+    val_loss_array: numpy array of average validation RMSE per pixel
+    radius: the radius used for the model
+    n_dimensions: the number of non-elevation dimensions of the model input
+    '''
+    fig, ax = plt.subplots()
+    ax.set_title(
+        f'Train RMSE on Map, Radius={radius}, N-dimensions={n_dimensions}'
+    )
+    plt.imshow(train_loss_array)
+    plt.colorbar(fraction=0.05, shrink=0.6)
+    ax.matshow(train_loss_array)
+    plt.show(fig)
+    fig, ax = plt.subplots()
+    ax.set_title(
+        f'Validation RMSE on Map, Radius={radius}, N-dimensions={n_dimensions}'
+    )
+    plt.imshow(train_loss_array)
+    plt.colorbar(fraction=0.05, shrink=0.8)
+    ax.matshow(val_loss_array)
+    plt.show(fig)
+    
+    
+def plot_loss_on_map_cnn(
+        train_loss_array: np.ndarray,
+        val_loss_array: np.ndarray,
+        x_size: int,
+        y_size: int,
+        n_dimensions: int,
+) -> None:  # displays plot
+    '''
+    Plots the training and validation loss per pixel on the map
+    to visualize the distribution
+    
+    Input
+    train_loss_array: numpy array of average training RMSE per pixel
+    val_loss_array: numpy array of average validation RMSE per pixel
+    radius: the radius used for the model
+    n_dimensions: the number of non-elevation dimensions of the model input
+    '''
+    fig, ax = plt.subplots()
+    ax.set_title(
+        f'Train RMSE on Map, x_size,y_size={x_size},{y_size}, '
+        f'N-dimensions={n_dimensions}'
+    )
+    plt.imshow(train_loss_array)
+    plt.colorbar(fraction=0.05, shrink=0.6)
+    ax.matshow(train_loss_array)
+    plt.show(fig)
+    fig, ax = plt.subplots()
+    ax.set_title(
+        f'Validation RMSE on Map, x,y={x_size},{y_size}, '
+        f'N-dimensions={n_dimensions}'
+    )
+    plt.imshow(train_loss_array)
+    plt.colorbar(fraction=0.05, shrink=0.8)
+    ax.matshow(val_loss_array)
+    plt.show(fig)
 
 
 def initialize_eval_results() -> pd.DataFrame:
@@ -10,7 +237,7 @@ def initialize_eval_results() -> pd.DataFrame:
     return pd.DataFrame(
         columns=[
             'radius',
-            'n_components',
+            'n_dimensions',
             
             'train_avg_std',
             'train_std_std',

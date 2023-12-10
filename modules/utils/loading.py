@@ -11,7 +11,7 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
 
-base_data_path = os.path.join("data", "Actually_Final_Dataset")
+base_data_path = os.path.join("data", "Dataset")
 
 def join_path(relative_path: str) -> str:
     return os.path.join(base_data_path, relative_path)
