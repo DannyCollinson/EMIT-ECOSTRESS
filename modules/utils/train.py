@@ -54,7 +54,9 @@ def train(
                     loss.backward()
                     optimizer.step()
                 train_loss[epoch] += (
-                    loss.item() / train_loader.dataset.ecostress_data.size
+                    loss.item() / (
+                        train_loader.dataset.ecostress_data.detach().numpy().size
+                    )
                 )
                 if epoch == start_epoch + n_epochs:
                     train_loss_eval_list.append(
@@ -75,8 +77,9 @@ def train(
                         x = model(x)
                         
                         val_loss[epoch] += (
-                            loss_fn(x, y.squeeze()).item() / 
-                            val_loader.dataset.ecostress_data.size
+                            loss_fn(x, y.squeeze()).item() / (
+                                val_loader.dataset.ecostress_data.detach().numpy().size
+                            )
                         )
                         if epoch == start_epoch + n_epochs:
                             val_loss_eval_list.append(

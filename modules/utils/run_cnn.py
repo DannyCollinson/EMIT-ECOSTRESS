@@ -197,20 +197,10 @@ def train_cnn(
     print('\nRunning performance evaluations')
     
     eval_train_loader = DataLoader(
-        dataset=train_dataset, batch_size=None, shuffle=False,
+        dataset=train_dataset, batch_size=2048, shuffle=False,
     )
-    _, _, _, train_loss_array, _ = (
-        utils.train.train(
-            model,
-            optimizer,
-            scheduler,
-            loss_fn,
-            eval_train_loader,
-            val_loader=eval_train_loader,
-            n_epochs=0,
-            loss_interval=None,
-            device=device,
-        )
+    train_loss_array = utils.eval.train_loss_map(
+        model, eval_train_loader, device
     )
     
     if eval_stats is not None:

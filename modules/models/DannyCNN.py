@@ -305,11 +305,11 @@ class UNet(nn.Module):
         
         self.linear_out1 = nn.Linear(
             in_features=y_size * x_size,
-            out_features=y_size * x_size,
+            out_features=y_size * x_size // 2,
         )
         
         self.linear_out2 = nn.Linear(
-            in_features=y_size * x_size,
+            in_features=self.linear_out1.out_features,
             out_features=y_size * x_size,
         )
         

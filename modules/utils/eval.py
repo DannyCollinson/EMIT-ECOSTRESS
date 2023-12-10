@@ -4,6 +4,62 @@ import matplotlib.pyplot as plt
 from torch import Size
 
 
+import time
+from typing import Union, Any
+
+import numpy as np
+import pandas as pd
+
+import torch
+from torch.nn.functional import mse_loss
+from torch.utils.data import DataLoader
+
+import utils.eval
+import datasets.Datasets
+
+
+def train_loss_map(
+    model,
+    loader: Union[DataLoader, None] = None,
+    device: str = 'cpu',
+) -> tuple[np.ndarray[np.float64, Any], np.ndarray[np.float64, Any]]:
+    model.eval()
+    with torch.no_grad():
+        loss_eval_list = []
+        for x, y in loader:
+            x = x.to(dtype=torch.float, device=device)
+            y = y.to(dtype=torch.float, device=device)
+            x = model(x)
+            loss_eval_list.append(
+                mse_loss(
+                    x, y.squeeze(), reduction='none'
+                ).cpu().detach().numpy()
+            )
+        
+        _, eval_losses, _ = (
+            utils.eval.evaluate_model_performance(
+                (
+                    np.array(
+                        loader.dataset.ecostress_data.shape
+                    ) -
+                    2 * loader.dataset.boundary_width
+                ),
+                loader.dataset.ecostress_scale,
+                (
+                    np.array(
+                        loader.dataset.ecostress_data.shape
+                    ) -
+                    2 * loader.dataset.boundary_width
+                ),
+                loader.dataset.ecostress_scale,
+                loss_eval_list,
+                loss_eval_list,
+            )
+        )
+
+    return eval_losses
+
+
 def plot_loss_patch_to_pixel(
         train_loss: np.ndarray,
         val_loss: np.ndarray,
