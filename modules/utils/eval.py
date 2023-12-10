@@ -103,6 +103,40 @@ def plot_loss_CNN(
     plt.show(fig)
 
 
+def plot_loss_on_map(
+        train_loss_array: np.ndarray,
+        val_loss_array: np.ndarray,
+        radius: int,
+        n_dimensions: int,
+) -> None:  # displays plot
+    '''
+    Plots the training and validation loss per pixel on the map
+    to visualize the distribution
+    
+    Input
+    train_loss_array: numpy array of average training RMSE per pixel
+    val_loss_array: numpy array of average validation RMSE per pixel
+    radius: the radius used for the model
+    n_dimensions: the number of non-elevation dimensions of the model input
+    '''
+    fig, ax = plt.subplots()
+    ax.set_title(
+        f'Train RMSE on Map, Radius={radius}, N-dimensions={n_dimensions}'
+    )
+    plt.imshow(train_loss_array)
+    plt.colorbar(fraction=0.05, shrink=0.6)
+    ax.matshow(train_loss_array)
+    plt.show(fig)
+    fig, ax = plt.subplots()
+    ax.set_title(
+        f'Validation RMSE on Map, Radius={radius}, N-dimensions={n_dimensions}'
+    )
+    plt.imshow(train_loss_array)
+    plt.colorbar(fraction=0.05, shrink=0.8)
+    ax.matshow(val_loss_array)
+    plt.show(fig)
+
+
 def initialize_eval_results() -> pd.DataFrame:
     '''
     Initializes the dataframe for the evaluation results
