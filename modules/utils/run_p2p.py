@@ -212,11 +212,15 @@ def train_patch_to_pixel(
     
     if eval_stats is not None:
         eval_stats = np.concatenate(
-            [np.array((radius, n_dimensions)), eval_stats]
+            [
+                np.array((radius, n_dimensions))[:, np.newaxis],
+                eval_stats[:, np.newaxis],
+            ],
+            axis=0,
         )
         
         stats_columns = utils.eval.initialize_eval_results().columns.to_list()
-        stats = pd.DataFrame(eval_stats, columns=stats_columns)
+        stats = pd.DataFrame({column: stat for column, stat in zip(stats_columns, eval_stats)})
         stats['radius'] = stats['radius'].astype(int)
         stats['n_components'] = stats['n_components'].astype(int)
     else:
