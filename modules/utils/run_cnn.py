@@ -152,6 +152,13 @@ def train_cnn(
             input_dim=train_dataset.input_dim,
             dropout_rate=dropout_rate,
         )
+    elif model_type == 'SmallU-Net':
+        model = models.DannyCNN.SmallUNet(
+            y_size=y_size,
+            x_size=x_size,
+            input_dim=train_dataset.input_dim,
+            dropout_rate=dropout_rate,
+        )
     elif model_type == 'SS':
         model = models.DannyCNN.SemanticSegmenter(
             y_size=y_size,
