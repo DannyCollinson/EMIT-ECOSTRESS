@@ -203,13 +203,6 @@ def train_cnn(
     
     print('\nRunning performance evaluations')
     
-    eval_train_loader = DataLoader(
-        dataset=train_dataset, batch_size=2048, shuffle=False,
-    )
-    train_loss_array = utils.eval.train_loss_map(
-        model, eval_train_loader, device
-    )
-    
     if eval_stats is not None:
         eval_stats = np.concatenate(
             [
@@ -239,10 +232,6 @@ def train_cnn(
         n_dimensions,
         model_type,
         input_type,
-    )
-    
-    utils.eval.plot_loss_on_map_cnn(
-        train_loss_array, val_loss_array, x_size, y_size, n_dimensions
     )
 
     return train_loss, val_loss, stats, train_loss_array, val_loss_array
