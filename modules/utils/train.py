@@ -135,6 +135,7 @@ def train(
                 else:
                     print('', end='')
                 print(f'Time: {time.time() - t:3.3}')
+                t = time.time()
             
             if scheduler is not None:
                 scheduler.step(val_loss[epoch])
