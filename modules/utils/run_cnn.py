@@ -170,7 +170,7 @@ def train_cnn(
     model = model.to(torch.device(device))
 
     optimizer = optim.Adam(
-        params=model.parameters(), lr=learning_rate, weight_decay=0, fused=True
+        params=model.parameters(), lr=learning_rate, weight_decay=0,
     )
 
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(

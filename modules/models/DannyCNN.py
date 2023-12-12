@@ -11,11 +11,14 @@ class SemanticSegmenter(nn.Module):
     https://towardsdatascience.com/practical-guide-to-semantic-segmentation-7c55b540489c
     with modification to get regression output instead of classification
     '''
-    def __init__(self, y_size: int, x_size: int, input_dim: int) -> None:
+    def __init__(
+            self, y_size: int, x_size: int, input_dim: int, dropout_rate: float
+    ) -> None:
         super(SemanticSegmenter, self).__init__()
         self.y_size = y_size
         self.x_size = x_size
         self.input_dim = input_dim
+        self.dropout_rate = dropout_rate
         
         self.down1 = nn.Conv2d(
             in_channels=input_dim,
@@ -63,12 +66,12 @@ class SemanticSegmenter(nn.Module):
         )
         
         self.midlinear1 = nn.Linear(
-            in_features=32 * 4 * 4, out_features=64
+            in_features=self.down5.out_channels, out_features=64
         )
         
         self.midlinear2 = nn.Linear(in_features=64, out_features=32)
         
-        self.midlinear3 = nn.Linear(in_features=32, out_features=16)
+        self.midlinear3 = nn.Linear(in_features=32, out_features=1)
         
         self.up4 = nn.ConvTranspose2d(
             in_channels=33,
@@ -126,28 +129,32 @@ class SemanticSegmenter(nn.Module):
         
     
     def forward(self, x: Tensor) -> Tensor:
-        x = x.permute(2, 0, 1)
+        if len(x.shape) == 3:
+            x = x.permute(2, 0, 1)
+            concat_axis = 0
+        else:
+            x = x.permute(0, 3, 1, 2)
+            concat_axis = 1
+                
+        down1 = F.dropout(F.relu(self.down1(x), self.dropout_rate))
+        down2 = F.dropout(F.relu(self.down2(down1), self.dropout_rate))
+        down3 = F.dropout(F.relu(self.down3(down2), self.dropout_rate))
+        down4 = F.dropout(F.relu(self.down4(down3), self.dropout_rate))
+        down5 = F.dropout(F.relu(self.down5(down4), self.dropout_rate))
         
-        down1 = F.dropout(F.relu(self.down1(x), 0.25))
-        down2 = F.dropout(F.relu(self.down2(down1), 0.25))
-        down3 = F.dropout(F.relu(self.down3(down2), 0.25))
-        down4 = F.dropout(F.relu(self.down4(down3), 0.25))
-        down5 = F.dropout(F.relu(self.down5(down4), 0.25))
+        mid1 = F.dropout(F.sigmoid(self.midlinear1(down5.flatten())), self.dropout_rate)
+        mid2 = F.dropout(F.sigmoid(self.midlinear2(mid1)), self.dropout_rate)
+        mid3 = self.midlinear3(mid2)
         
-        mid1 = F.dropout(F.sigmoid(self.midlinear1(down5.flatten())), 0.25)
-        mid2 = F.dropout(F.sigmoid(self.midlinear2(mid1)), 0.25)
-        mid3 = F.sigmoid(self.midlinear3(mid2))
-        
-        up5 = torch.cat([down5, mid3.reshape((1, 4, 4))], axis=0)
-        
+        up5 = torch.cat([down5, mid3.reshape((1, 1, 1))], axis=concat_axis)        
         up4 = F.relu(self.up4(up5))
-        up4 = torch.cat([down4, up4], axis=0)
+        up4 = torch.cat([down4, up4], axis=concat_axis)
         up3 = F.relu(self.up3(up4))
-        up3 = torch.cat([down3, up3], axis=0)
+        up3 = torch.cat([down3, up3], axis=concat_axis)
         up2 = F.relu(self.up2(up3))
-        up2 = torch.cat([down2, up2], axis=0)
+        up2 = torch.cat([down2, up2], axis=concat_axis)
         up1 = F.relu(self.up1(up2))
-        up1 = torch.cat([down1, up1], axis=0)
+        up1 = torch.cat([down1, up1], axis=concat_axis)
         
         up0 = F.sigmoid(self.up0(up1))
         
